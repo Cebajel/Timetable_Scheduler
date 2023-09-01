@@ -68,7 +68,7 @@ The expected outcomes of this research project include:
 
 ## 5. Project Timeline
 
-The project timeline is anticipated to span [Start Date] to [End Date], with phases including literature review, software development, testing, scalability analysis, user interface design, and reporting tool implementation.
+The project timeline is anticipated to span the Autumn semester 2023-2024, with phases including literature review, software development, testing, scalability analysis, user interface design, and reporting tool implementation.
 
 ## 6. Budget
 
