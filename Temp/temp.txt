@@ -1,0 +1,211 @@
+Monday, 1, 21, CS 410
+Monday, 1, 22, CS 202
+Monday, 1, 23, CS 426
+Monday, 1, 115, EE 206
+Monday, 1, 115, EE 209
+Monday, 1, 117, EE 608
+Monday, 1, 119, EE 633
+Monday, 1, 203, EE 688
+Monday, 1, 207, MA 208
+Monday, 1, 210, MA 206
+Monday, 1, 211, ME 302
+Monday, 1, 214, ME 648
+Monday, 2, 21, CS 632
+Monday, 2, 22, EE 208
+Monday, 2, 22, EE 223
+Monday, 2, 23, CS 209
+Monday, 2, 115, EE 626
+Monday, 2, 117, ME 204
+Monday, 2, 119, ME 407
+Monday, 2, 203, ME 408
+Monday, 2, 207, ME 435
+Monday, 2, 210, ME 604
+Monday, 2, SP16, ME 647
+Monday, 3, 117, ME 445
+Monday, 3, 203, EE 629
+Monday, 3, 207, EE 687
+Monday, 3, Auditorium, ME 222
+Monday, 3, 24, ME 408
+Monday, 3, SP16, ME 647
+Monday, 4, 21, EE 309
+Monday, 4, 21, EE 447
+Monday, 4, 22, EE 446
+Monday, 4, 211, PH 202
+Monday, 4, 24, ME 408
+Monday, 5, 23, ME 208
+Monday, 5, 115, ME 444
+Monday, 5, 203, EE 610
+Monday, 5, 24, EE 611
+Monday, 6, 23, CS 427
+Monday, 6, 24, EE 611
+Monday, 7, 23, CS 205
+Monday, 7, 210, PH 426
+Monday, 7, 211, CS 323
+Monday, 7, 24, EE 611
+Monday, 8, 21, HS 402
+Monday, 8, 22, HS 404
+Monday, 8, 23, HS 406
+Monday, 8, 215, HS 420
+Monday, 8, Auditorium, EE 204
+Tuesday, 1, 21, CS 410
+Tuesday, 1, 23, CS 426
+Tuesday, 1, 117, EE 608
+Tuesday, 1, 119, EE 633
+Tuesday, 1, 207, MA 208
+Tuesday, 1, 210, MA 206
+Tuesday, 1, 211, ME 302
+Tuesday, 1, 214, ME 648
+Tuesday, 2, 21, CS 632
+Tuesday, 2, 22, EE 208
+Tuesday, 2, 22, EE 223
+Tuesday, 2, 23, PH 203
+Tuesday, 2, 115, EE 626
+Tuesday, 2, 119, ME 407
+Tuesday, 2, 203, ME 408
+Tuesday, 2, 207, ME 435
+Tuesday, 2, 210, ME 604
+Tuesday, 2, 211, ME 647
+Tuesday, 2, Auditorium, CS 209
+Tuesday, 3, 22, CS 304
+Tuesday, 3, 23, EE 620
+Tuesday, 3, 115, ME 426
+Tuesday, 3, 117, ME 445
+Tuesday, 3, 210, PH 202
+Tuesday, 4, 21, EE 309
+Tuesday, 4, 21, EE 447
+Tuesday, 4, 22, EE 446
+Tuesday, 4, 215, ME 208
+Tuesday, 5, 21, EE 226
+Tuesday, 5, 23, EE 610
+Tuesday, 5, 115, ME 444
+Tuesday, 5, Auditorium, CS 348
+Tuesday, 6, 23, ME 222
+Tuesday, 6, Auditorium, CE 301
+Tuesday, 7, 21, HS 402
+Tuesday, 7, 115, HS 406
+Tuesday, 7, 203, ME 204
+Tuesday, 7, 211, HS 404
+Tuesday, 7, 215, HS 420
+Tuesday, 8, 119, MA 428
+Tuesday, 8, Auditorium, EE 204
+Wednesday, 1, 21, CS 410
+Wednesday, 1, 22, CS 202
+Wednesday, 1, 23, CS 426
+Wednesday, 1, 117, EE 608
+Wednesday, 1, 119, EE 633
+Wednesday, 1, 203, EE 688
+Wednesday, 1, 210, MA 206
+Wednesday, 1, 211, ME 302
+Wednesday, 1, 214, ME 648
+Wednesday, 1, 215, MA 208
+Wednesday, 2, 21, CS 632
+Wednesday, 2, 22, EE 629
+Wednesday, 2, 119, ME 407
+Wednesday, 2, 207, ME 604
+Wednesday, 2, 210, EE 226
+Wednesday, 3, 115, ME 208
+Wednesday, 3, 119, EE 447
+Wednesday, 4, 21, EE 620
+Wednesday, 4, 117, CS 427
+Wednesday, 4, 207, ME 445
+Wednesday, 5, 21, EE 624
+Wednesday, 5, 22, CS 323
+Wednesday, 5, 115, ME 444
+Wednesday, 5, 211, ME 435
+Wednesday, 5, EDC Lab 116, EE 212
+Wednesday, 6, 22, ME 426
+Wednesday, 6, 203, CS 304
+Wednesday, 6, EDC Lab 116, EE 212
+Wednesday, 7, 21, HS 402
+Wednesday, 7, 23, HS 406
+Wednesday, 7, 207, HS 429
+Wednesday, 7, EDC Lab 116, EE 212
+Wednesday, 8, 23, CS 348
+Wednesday, 8, 215, PH 426
+Wednesday, 8, Auditorium, CS 205
+Thursday, 1, 211, EE 314
+Thursday, 1, SPCC Lab (2nd floor), EE 226
+Thursday, 2, 22, CS 202
+Thursday, 2, 203, EE 610
+Thursday, 2, 207, ME 426
+Thursday, 2, 211, CS 348
+Thursday, 2, 214, EE 620
+Thursday, 2, SPCC Lab (2nd floor), EE 226
+Thursday, 3, 119, ME 204
+Thursday, 3, 210, EE 209
+Thursday, 3, Auditorium, CE 301
+Thursday, 4, 23, CS 427
+Thursday, 5, 23, EE 204
+Thursday, 5, 117, EE 446
+Thursday, 5, 203, EE 688
+Thursday, 6, 210, EE 687
+Thursday, 6, SP16, CS 314
+Thursday, 6, EDC Lab 116, EE 214
+Thursday, 6, Lab 205(KDOM)+Lab 205 (SOM)+Lab 24, ME 313
+Thursday, 7, EDC Lab 116, EE 214
+Thursday, 7, Lab 205(KDOM)+Lab 205 (SOM)+Lab 24, ME 313
+Thursday, 8, 211, EE 624
+Thursday, 8, SP16, CS 314
+Thursday, 8, EDC Lab 116, EE 214
+Thursday, 8, Lab 205(KDOM)+Lab 205 (SOM)+Lab 24, ME 313
+Friday, 1, 115, EE 624
+Friday, 1, 118, ME 224
+Friday, 2, 23, EE 687
+Friday, 2, 119, HS 429
+Friday, 2, 211, ME 647
+Friday, 2, 118, ME 224
+Friday, 3, 23, EE 309
+Friday, 3, 214, MA 428
+Friday, 3, 215, EE 626
+Friday, 3, 118, ME 224
+Friday, 4, 21, PH 426
+Friday, 4, 203, CS 304
+Friday, 4, Auditorium, CS 205
+Friday, 5, SP16, CS 315
+Friday, 5, EDC Lab 116, EE 314
+Friday, 5, DSP Lab (2nd floor), EE 216
+Friday, 5, lab 24 and mech manuf. Lab + lab 24, ME 314
+Friday, 5, Room 27, PH 212
+Friday, 6, SP16, CS 315
+Friday, 6, EDC Lab 116, EE 314
+Friday, 6, DSP Lab (2nd floor), EE 216
+Friday, 6, lab 24 and mech manuf. Lab + lab 24, ME 314
+Friday, 6, Room 27, PH 212
+Friday, 7, 23, CS 202
+Friday, 7, 211, EE 206
+Friday, 7, SP16, CS 315
+Friday, 7, DSP Lab (2nd floor), EE 216
+Friday, 7, lab 24 and mech manuf. Lab + lab 24, ME 314
+Friday, 7, Room 27, PH 212
+Friday, 8, 203, CS 323
+Friday, 8, 214, PH 203
+Friday, 8, EDC Lab 116, EE 314
+Friday, 8, DSP Lab (2nd floor), EE 216
+Saturday, 1, 115, HS 404
+Saturday, 1, 117, HS 420
+Saturday, 1, 215, PH 202
+Saturday, 2, 117, MA 428
+Saturday, 2, 203, MA 206
+Saturday, 2, 211, EE 209
+Saturday, 3, 211, ME 222
+Saturday, 3, 214, EE 629
+Saturday, 4, 22, EE 223
+Saturday, 4, 119, MA 208
+Saturday, 4, Auditorium, CE 301
+Saturday, 5, 21, EE 206
+Saturday, 5, 24, CS 214
+Saturday, 5, SP16, CS 316
+Saturday, 5, Manufacturing Lab (Next to SP6), ME 212
+Saturday, 5, SP2, ME 411
+Saturday, 6, 24, CS 214
+Saturday, 6, SP16, CS 316
+Saturday, 6, Manufacturing Lab (Next to SP6), ME 212
+Saturday, 6, SP2, ME 411
+Saturday, 7, 24, CS 214
+Saturday, 7, SP16, CS 316
+Saturday, 7, Manufacturing Lab (Next to SP6), ME 212
+Saturday, 7, SP2, ME 411
+Saturday, 8, 117, CS 209
+Saturday, 8, 119, HS 429
+Saturday, 8, 203, PH 203
+Saturday, 8, 215, EE 208

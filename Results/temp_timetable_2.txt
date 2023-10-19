@@ -1,0 +1,15 @@
+Mon1,Wed1,Sun5 : 1
+Mon2,Fri7,Sat5 : 2
+Mon3,Tue8,Thu2,Sun1 : 3
+Mon4,Fri6,Sun4 : 4
+Mon5,Fri3,Sat8,Sun9 : 5
+Mon6,Wed4,Thu3 : 6
+Mon7,Wed9,Thu1 : 7
+Mon8,Tue9,Wed3 : 8
+Mon9,Tue5,Thu8 : 9
+Tue2,Sat1,Sun6 : 10
+Tue4,Wed7,Fri4,Sun3 : 11
+Tue7,Fri9,Sat6 : 12
+Wed2,Fri5,Sat2,Sun2 : 13
+Wed6 : 14
+Wed8,Fri1,Sat4 : 15
