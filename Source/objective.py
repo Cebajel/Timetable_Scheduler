@@ -3,6 +3,52 @@ import gurobipy as gp
 import classes
 import numpy as np
 
+def feasibility_objective(my_model, schedule, parameters : classes.Params):
+    x1 = schedule.sum(axis=2)
+    z1 = my_model.addMVar((len(parameters.baskets_elective), parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY)
+
+    my_model.addConstrs(
+        (((z1[i, j, k].item() == 0) >> (x1[j, k, np.array((x,y))].sum() <= 1))
+         for i,(x,y) in enumerate(parameters.baskets_elective) for j in range(parameters.number_of_working_days) 
+         for k in range(parameters.slots)),
+         name = "Comditional_Constraint_1"
+    )
+
+    my_model.addConstrs(
+        (((z1[i, j, k].item() == 1) >> (x1[j, k, np.array((x,y))].sum() >= 2))
+         for i,(x,y) in enumerate(parameters.baskets_elective) for j in range(parameters.number_of_working_days) 
+         for k in range(parameters.slots)),
+         name = "Comditional_Constraint_2"
+    )
+
+    z1 = z1.sum(axis=2)
+    z1 = z1.sum(axis=1)
+
+    # z2 = my_model.addMVar((len(parameters.baskets_core), parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY)
+
+    # my_model.addConstrs(
+    #     (((z2[i, j, k].item() == 0) >> (x1[j, k, np.array((x,y))].sum() <= 1))
+    #      for i,(x,y) in enumerate(parameters.baskets_core) for j in range(parameters.number_of_working_days) 
+    #      for k in range(parameters.slots)),
+    #      name = "Comditional_Constraint_1"
+    # )
+
+    # my_model.addConstrs(
+    #     (((z2[i, j, k].item() == 1) >> (x1[j, k, np.array((x,y))].sum() >= 2))
+    #      for i,(x,y) in enumerate(parameters.baskets_core) for j in range(parameters.number_of_working_days) 
+    #      for k in range(parameters.slots)),
+    #      name = "Comditional_Constraint_2"
+    # )
+
+    # z2 = z2.sum(axis=2)
+    # z2 = z2.sum(axis=1)
+
+    # my_model.setObjective((z1*np.array(parameters.basket_number_of_students)).sum() + (z2*1000).sum(), GRB.MINIMIZE)
+    # my_model.setObjective((z2*1000).sum(), GRB.MINIMIZE)
+    my_model.setObjective((z1*np.array(parameters.basket_number_of_students)).sum(), GRB.MINIMIZE)
+    my_model.update()
+    return
+
 
 def obj_same_venue_0(my_model, schedule, parameters : classes.Params, index, priority):
     x1 = schedule[:, :, :parameters.venue_types[0], :].sum(axis=1)

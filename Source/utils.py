@@ -1,14 +1,17 @@
+import pandas as pd
+from itertools import chain
 import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 import pandas, math
 import classes
+import random
 
 
 def read_input_excel(file):
     # second_file = ""
     second_file = "-test"
-    courses = pandas.read_excel(file, "Courses"+second_file)
+    courses = pandas.read_excel(file, "Courses" + second_file)
     columns = courses.columns
     courses_dict = {}
     student_dict = {}
@@ -22,10 +25,12 @@ def read_input_excel(file):
         L = int(value[columns[3]]) if not math.isnan(value[columns[3]]) else 0
         T = int(value[columns[4]]) if not math.isnan(value[columns[4]]) else 0
         P = int(value[columns[5]]) if not math.isnan(value[columns[5]]) else 0
-        
+
         if len(temp_campus) > 1:
             splitted_courses_campus.append(code)
-            temp_campus = {i.split(":")[0].strip() : i.split(":")[1].strip() for i in temp_campus}
+            temp_campus = {
+                i.split(":")[0].strip(): i.split(":")[1].strip() for i in temp_campus
+            }
 
             for ltp in temp_campus:
                 value[columns[0]] = code + "_" + ltp
@@ -41,7 +46,11 @@ def read_input_excel(file):
                 new_course = classes.Course(value, columns, temp_campus[ltp])
                 courses_dict[new_course.code] = new_course
                 instructors = [i.strip() for i in value[columns[2]].split("\n")]
-                TAs = [i.strip() for i in value[columns[12]].split("\n")] if isinstance(value[columns[12]], str) else []
+                TAs = (
+                    [i.strip() for i in value[columns[12]].split("\n")]
+                    if isinstance(value[columns[12]], str)
+                    else []
+                )
 
                 for i in instructors:
                     if i not in instructor_dict:
@@ -54,13 +63,19 @@ def read_input_excel(file):
                     if i not in student_dict:
                         new_TA = classes.Student(i)
                         student_dict[new_TA.rollnumber] = new_TA
-                    student_dict[i].add_course(courses_dict[value[columns[0]].strip()], 0)
+                    student_dict[i].add_course(
+                        courses_dict[value[columns[0]].strip()], 0
+                    )
                     new_course.add_TA(student_dict[i])
         else:
             new_course = classes.Course(value, columns, temp_campus[0])
             courses_dict[new_course.code] = new_course
             instructors = [i.strip() for i in value[columns[2]].split("\n")]
-            TAs = [i.strip() for i in value[columns[12]].split("\n")] if isinstance(value[columns[12]], str) else []
+            TAs = (
+                [i.strip() for i in value[columns[12]].split("\n")]
+                if isinstance(value[columns[12]], str)
+                else []
+            )
 
             for i in instructors:
                 if i not in instructor_dict:
@@ -80,7 +95,7 @@ def read_input_excel(file):
     # print([f"{i.rollnumber} : { {course.code:priority for course,priority in i.courses.items()} }" for i in student_dict.values()])
     # exit(1)
 
-    registrations = pandas.read_excel(file, "Registrations"+second_file)
+    registrations = pandas.read_excel(file, "Registrations" + second_file)
     columns = registrations.columns
 
     for value in registrations.iterrows():
@@ -92,33 +107,79 @@ def read_input_excel(file):
             # del current_student
 
         if value[columns[0]].strip() in splitted_courses_campus:
-            student_dict[value[columns[1]]].add_course(courses_dict[value[columns[0]].strip() + "_L"], int(value[columns[3]]))
-            student_dict[value[columns[1]]].add_course(courses_dict[value[columns[0]].strip() + "_P"], int(value[columns[3]]))
-            courses_dict[value[columns[0]].strip() + "_L"].add_student(student_dict[value[columns[1]]], int(value[columns[3]]))
-            courses_dict[value[columns[0]].strip() + "_P"].add_student(student_dict[value[columns[1]]], int(value[columns[3]]))
+            student_dict[value[columns[1]]].add_course(
+                courses_dict[value[columns[0]].strip() + "_L"], int(value[columns[3]])
+            )
+            student_dict[value[columns[1]]].add_course(
+                courses_dict[value[columns[0]].strip() + "_P"], int(value[columns[3]])
+            )
+            courses_dict[value[columns[0]].strip() + "_L"].add_student(
+                student_dict[value[columns[1]]], int(value[columns[3]])
+            )
+            courses_dict[value[columns[0]].strip() + "_P"].add_student(
+                student_dict[value[columns[1]]], int(value[columns[3]])
+            )
+            # For printing purposes
+            if (int(value[columns[3]]) == 0) and (
+                value[columns[4]]
+                not in courses_dict[value[columns[0]].strip() + "_L"].groups
+            ):
+                courses_dict[value[columns[0]].strip() + "_L"].groups.append(
+                    value[columns[4]]
+                )
+            if (int(value[columns[3]]) == 0) and (
+                value[columns[4]]
+                not in courses_dict[value[columns[0]].strip() + "_P"].groups
+            ):
+                courses_dict[value[columns[0]].strip() + "_P"].groups.append(
+                    value[columns[4]]
+                )
         else:
             if value[columns[0]].strip() in courses_dict:
-                student_dict[value[columns[1]]].add_course(courses_dict[value[columns[0]].strip()], int(value[columns[3]]))
-                courses_dict[value[columns[0]].strip()].add_student(student_dict[value[columns[1]]], int(value[columns[3]]))
+                student_dict[value[columns[1]]].add_course(
+                    courses_dict[value[columns[0]].strip()], int(value[columns[3]])
+                )
+                courses_dict[value[columns[0]].strip()].add_student(
+                    student_dict[value[columns[1]]], int(value[columns[3]])
+                )
+                # For printing purposes
+                if (int(value[columns[3]]) == 0) and (
+                    value[columns[4]]
+                    not in courses_dict[value[columns[0]].strip()].groups
+                ):
+                    courses_dict[value[columns[0]].strip()].groups.append(
+                        value[columns[4]]
+                    )
 
-    venues = pandas.read_excel(file, "Venues"+second_file)
+    venues = pandas.read_excel(file, "Venues" + second_file)
     columns = venues.columns
 
     for value in venues.iterrows():
         value = value[1]
-        current_venue = classes.Venue(str(value[columns[0]]).strip(), value[columns[4]], value[columns[5]], value[columns[6]])
+        current_venue = classes.Venue(
+            str(value[columns[0]]).strip(),
+            value[columns[4]],
+            value[columns[5]],
+            value[columns[6]],
+        )
         venue_dict[str(value[columns[0]]).strip()] = current_venue
         # del current_venue
 
     return courses_dict, student_dict, instructor_dict, venue_dict
 
 
-def lecture_splitting(courses_dict, campus_list, venue_campus, venue_types, venue_setups):
+def lecture_splitting(
+    courses_dict, campus_list, venue_campus, venue_types, venue_setups
+):
     temp_values = [value for value in courses_dict.values()]
     for course in temp_values:
         current_course_campus = campus_list.index(course.campus_type)
-        current_course_classrooms = np.where(venue_campus[:venue_types[0]] == current_course_campus)[0]
-        current_course_max_classroom_strength = np.max(venue_setups[current_course_classrooms])
+        current_course_classrooms = np.where(
+            venue_campus[: venue_types[0]] == current_course_campus
+        )[0]
+        current_course_max_classroom_strength = np.max(
+            venue_setups[current_course_classrooms]
+        )
 
         splitting = False
 
@@ -127,28 +188,40 @@ def lecture_splitting(courses_dict, campus_list, venue_campus, venue_types, venu
             strength_factor = course.division_l
         elif course.get_strength() > current_course_max_classroom_strength:
             splitting = True
-            strength_factor = math.ceil(course.get_strength() / current_course_max_classroom_strength)
+            strength_factor = math.ceil(
+                course.get_strength() / current_course_max_classroom_strength
+            )
 
         if splitting and (course.L + course.T) > 0:
             new_strength = math.ceil(course.get_strength() / strength_factor)
-            temp_students_list = set(sorted(course.students.keys(), key=lambda x: x.rollnumber))
+            temp_students_list = set(
+                sorted(course.students.keys(), key=lambda x: x.rollnumber)
+            )
             tas = set(course.TAs)
             temp_students_list = list(temp_students_list - tas)
             tas = list(tas)
 
             new_strength -= len(tas)
 
-            for i in range(strength_factor) :
+            for i in range(strength_factor):
                 new_course = course.copy()
                 new_course.code = new_course.code + "/L" + str(i)
                 new_course.P = 0
 
-                new_course.students = {j : course.students[j] for j in temp_students_list[new_strength*i : new_strength*i + new_strength] + tas}
+                new_course.students = {
+                    j: course.students[j]
+                    for j in temp_students_list[
+                        new_strength * i : new_strength * i + new_strength
+                    ]
+                    + tas
+                }
                 courses_dict[new_course.code] = new_course
                 with open("Results/Course_Rollnumbers.txt", "a") as file:
-                    file.write(f"\n{new_course.code} : { {i.rollnumber:priority for i,priority in new_course.students.items()} }\n")
+                    file.write(
+                        f"\n{new_course.code} : { {i.rollnumber:priority for i,priority in new_course.students.items()} }\n"
+                    )
 
-                for student, priority in new_course.students.items() :
+                for student, priority in new_course.students.items():
                     student.add_course(new_course, priority)
 
                 for instructor in new_course.instructors:
@@ -161,17 +234,23 @@ def lecture_splitting(courses_dict, campus_list, venue_campus, venue_types, venu
                 for instructor in course.instructors:
                     instructor.courses.remove(course)
                 del courses_dict[course.code]
-                
+
     del temp_values, tas
     return
 
 
-def practical_splitting(courses_dict, campus_list, venue_campus, venue_types, venue_setups):
+def practical_splitting(
+    courses_dict, campus_list, venue_campus, venue_types, venue_setups
+):
     temp_values = [value for value in courses_dict.values()]
     for course in temp_values:
         current_course_campus = campus_list.index(course.campus_type)
-        current_course_classrooms = np.where(venue_campus[venue_types[0]:] == current_course_campus)[0]
-        current_course_max_classroom_strength = np.max(venue_setups[current_course_classrooms])
+        current_course_classrooms = np.where(
+            venue_campus[venue_types[0] :] == current_course_campus
+        )[0]
+        current_course_max_classroom_strength = np.max(
+            venue_setups[current_course_classrooms]
+        )
         splitting = False
 
         if course.division_p > 1:
@@ -179,29 +258,41 @@ def practical_splitting(courses_dict, campus_list, venue_campus, venue_types, ve
             strength_factor = course.division_p
         elif course.get_strength() > current_course_max_classroom_strength:
             splitting = True
-            strength_factor = math.ceil(course.get_strength() / current_course_max_classroom_strength)
+            strength_factor = math.ceil(
+                course.get_strength() / current_course_max_classroom_strength
+            )
 
         if splitting and course.P > 0:
             new_strength = math.ceil(course.get_strength() / strength_factor)
-            temp_students_list = set(sorted(course.students.keys(), key=lambda x: x.rollnumber))
+            temp_students_list = set(
+                sorted(course.students.keys(), key=lambda x: x.rollnumber)
+            )
             tas = set(course.TAs)
             temp_students_list = list(temp_students_list - tas)
             tas = list(tas)
 
             new_strength -= len(tas)
 
-            for i in range(strength_factor) :
+            for i in range(strength_factor):
                 new_course = course.copy()
                 new_course.code = new_course.code + "/P" + str(i)
                 new_course.L = 0
                 new_course.T = 0
 
-                new_course.students = {j : course.students[j] for j in temp_students_list[new_strength*i : new_strength*i + new_strength] + tas}
+                new_course.students = {
+                    j: course.students[j]
+                    for j in temp_students_list[
+                        new_strength * i : new_strength * i + new_strength
+                    ]
+                    + tas
+                }
                 courses_dict[new_course.code] = new_course
                 with open("Results/Course_Rollnumbers.txt", "a") as file:
-                    file.write(f"\n{new_course.code} : { {i.rollnumber:priority for i,priority in new_course.students.items()} }\n")
+                    file.write(
+                        f"\n{new_course.code} : { {i.rollnumber:priority for i,priority in new_course.students.items()} }\n"
+                    )
 
-                for student, priority in new_course.students.items() :
+                for student, priority in new_course.students.items():
                     student.add_course(new_course, priority)
 
                 for instructor in new_course.instructors:
@@ -213,45 +304,169 @@ def practical_splitting(courses_dict, campus_list, venue_campus, venue_types, ve
                 for instructor in course.instructors:
                     instructor.courses.remove(course)
             del courses_dict[course.code]
-                
+
     del temp_values, tas
     return
 
 
-def make_baskets(parameters : classes.Params):
-    # least_priority = int(np.max(parameters.student_course_priority))
+def make_baskets(parameters: classes.Params):
+    least_priority = int(np.max(parameters.student_course_priority))
+    # least_priority = 1
 
-    parameters.baskets = []
+    parameters.baskets_core = []
+    parameters.baskets_elective = []
+    parameters.basket_students_core = []
+    parameters.basket_students_elective = []
+    temp = []
+    parameters.basket_number_of_students = []
+    parameters.basket_number_of_students_core = []
+
     for k in range(parameters.number_of_students):
-        courses_1 = list(np.intersect1d(parameters.full_sem_courses + parameters.pre_half_sem_courses, np.where(parameters.student_course_priority[k] == 0)[0]))
-        courses_1 = courses_1 + list(np.intersect1d(parameters.full_sem_courses + parameters.pre_half_sem_courses, np.where(parameters.student_course_priority[k] == 1)[0]))
-        courses_1 = courses_1 + list(np.intersect1d(parameters.full_sem_courses + parameters.pre_half_sem_courses, np.where(parameters.student_course_priority[k] == 2)[0]))
-        # courses_1 = courses_1 + list(np.intersect1d(parameters.full_sem_courses + parameters.pre_half_sem_courses, np.where(parameters.student_course_priority[k] == 3)[0]))
-        courses_2 = list(np.intersect1d(parameters.full_sem_courses + parameters.post_half_sem_courses, np.where(parameters.student_course_priority[k] == 0)[0]))
-        courses_2 = courses_2 + list(np.intersect1d(parameters.full_sem_courses + parameters.post_half_sem_courses, np.where(parameters.student_course_priority[k] == 1)[0]))
-        courses_2 = courses_2 + list(np.intersect1d(parameters.full_sem_courses + parameters.post_half_sem_courses, np.where(parameters.student_course_priority[k] == 2)[0]))
-        # courses_2 = courses_2 + list(np.intersect1d(parameters.full_sem_courses + parameters.post_half_sem_courses, np.where(parameters.student_course_priority[k] == 3)[0]))
-        # courses_1 = sorted(courses_1)
-        # courses_2 = sorted(courses_2)
-        if (len(courses_1) > 1) and (courses_1 not in parameters.baskets):
-            parameters.baskets.append(courses_1)
-        if (len(courses_2) > 1) and (courses_2 not in parameters.baskets):
-            parameters.baskets.append(courses_2)
-    
-    # for basket in parameters.baskets:
-    #     print(basket)
+        courses_core_1 = list(
+            np.intersect1d(
+                parameters.full_sem_courses + parameters.pre_half_sem_courses,
+                np.where(parameters.student_course_priority[k] == 0)[0],
+            )
+        )
+        courses_elective_1 = []
+        for priority in range(1, least_priority + 1):
+            courses_elective_1 = courses_elective_1 + list(
+                np.intersect1d(
+                    parameters.full_sem_courses + parameters.pre_half_sem_courses,
+                    np.where(parameters.student_course_priority[k] == priority)[0],
+                )
+            )
+        courses_core_2 = list(
+            np.intersect1d(
+                parameters.full_sem_courses + parameters.post_half_sem_courses,
+                np.where(parameters.student_course_priority[k] == 0)[0],
+            )
+        )
+        courses_elective_2 = []
+        for priority in range(1, least_priority + 1):
+            courses_elective_2 = courses_elective_2 + list(
+                np.intersect1d(
+                    parameters.full_sem_courses + parameters.post_half_sem_courses,
+                    np.where(parameters.student_course_priority[k] == priority)[0],
+                )
+            )
+        courses_core_1 = sorted(courses_core_1)
+        courses_core_2 = sorted(courses_core_2)
+        courses_elective_1 = sorted(courses_elective_1)
+        courses_elective_2 = sorted(courses_elective_2)
+
+        for i in range(len(courses_core_1)):
+            for j in range(i + 1, len(courses_core_1)):
+                temp = [courses_core_1[i], courses_core_1[j]]
+                if temp not in parameters.baskets_core:
+                    parameters.baskets_core.append(temp)
+                    parameters.basket_number_of_students_core.append(1)
+                    parameters.basket_students_core.append([parameters.student_list[k]])
+                else:
+                    if parameters.student_list[k] not in parameters.basket_students_core[parameters.baskets_core.index(temp)]:
+                        parameters.basket_students_core[parameters.baskets_core.index(temp)].append(parameters.student_list[k])
+
+                        parameters.basket_number_of_students_core[
+                            parameters.baskets_core.index(temp)
+                        ] += 1
+
+        for i in range(len(courses_core_2)):
+            for j in range(i + 1, len(courses_core_2)):
+                temp = [courses_core_2[i], courses_core_2[j]]
+                if temp not in parameters.baskets_core:
+                    parameters.baskets_core.append(temp)
+                    parameters.basket_number_of_students_core.append(1)
+                    parameters.basket_students_core.append([parameters.student_list[k]])
+                else:
+                    if parameters.student_list[k] not in parameters.basket_students_core[parameters.baskets_core.index(temp)]:
+                        parameters.basket_students_core[parameters.baskets_core.index(temp)].append(parameters.student_list[k])
+
+                        parameters.basket_number_of_students_core[
+                            parameters.baskets_core.index(temp)
+                        ] += 1
+
+        for i in range(len(courses_elective_1)):
+            for j in range(i + 1, len(courses_elective_1)):
+                temp = [courses_elective_1[i], courses_elective_1[j]]
+                if temp not in parameters.baskets_elective + parameters.baskets_core:
+                    parameters.baskets_elective.append(temp)
+                    parameters.basket_number_of_students.append(1)
+                    parameters.basket_students_elective.append([parameters.student_list[k]])
+                else:
+                    if temp in parameters.baskets_elective:
+                        if parameters.student_list[k] not in parameters.basket_students_elective[parameters.baskets_elective.index(temp)]:
+                            parameters.basket_students_elective[parameters.baskets_elective.index(temp)].append(parameters.student_list[k])
+
+                            parameters.basket_number_of_students[
+                                parameters.baskets_elective.index(temp)
+                            ] += 1
+
+        for i in range(len(courses_elective_2)):
+            for j in range(i + 1, len(courses_elective_2)):
+                temp = [courses_elective_2[i], courses_elective_2[j]]
+                if temp not in parameters.baskets_elective + parameters.baskets_core:
+                    parameters.baskets_elective.append(temp)
+                    parameters.basket_number_of_students.append(1)
+                    parameters.basket_students_elective.append([parameters.student_list[k]])
+                else:
+                    if temp in parameters.baskets_elective:
+                        if parameters.student_list[k] not in parameters.basket_students_elective[parameters.baskets_elective.index(temp)]:
+                            parameters.basket_students_elective[parameters.baskets_elective.index(temp)].append(parameters.student_list[k])
+
+                            parameters.basket_number_of_students[
+                                parameters.baskets_elective.index(temp)
+                            ] += 1
+
+        # part 2
+        # if len(courses_core_1) > 1 and courses_core_1 not in parameters.baskets_core:
+        #     parameters.baskets_core.append(courses_core_1)
+
+        # if len(courses_core_2) > 1 and courses_core_2 not in parameters.baskets_core:
+        #     parameters.baskets_core.append(courses_core_2)
+
+        # for i in range(len(courses_elective_1)):
+        #     for j in range(i+1, len(courses_elective_1)):
+        #         temp = [courses_elective_1[i], courses_elective_1[j]]
+        #         if temp not in parameters.baskets_elective:
+        #             parameters.baskets_elective.append(temp)
+        #             parameters.basket_number_of_students.append(1)
+        #         else:
+        #             if temp in parameters.baskets_elective:
+        #                 parameters.basket_number_of_students[parameters.baskets_elective.index(temp)] += 1
+
+        # for i in range(len(courses_elective_2)):
+        #     for j in range(i+1, len(courses_elective_2)):
+        #         temp = [courses_elective_2[i], courses_elective_2[j]]
+        #         if temp not in parameters.baskets_elective:
+        #             parameters.baskets_elective.append(temp)
+        #             parameters.basket_number_of_students.append(1)
+        #         else:
+        #             if temp in parameters.baskets_elective:
+        #                 parameters.basket_number_of_students[parameters.baskets_elective.index(temp)] += 1
+
+    # print(parameters.basket_number_of_students_core)
     # exit(1)
-    # print(parameters.baskets_core)
-    # print(parameters.baskets_elective)
+
+    with open("Results/baskets.txt", "w") as f:
+        f.write(f"Core Courses:\n\n")
+        for i, (x, y) in enumerate(parameters.baskets_core):
+            f.write(f"{parameters.course_list[x],parameters.course_list[y]}\n")
+        f.write(f"\nElective Courses:\n\n")
+        for i, (x, y) in enumerate(parameters.baskets_elective):
+            f.write(
+                f"{parameters.course_list[x],parameters.course_list[y]} : {parameters.basket_number_of_students[i]}\n"
+            )
     return
 
 
 def initialize_parameters(file_name):
-    courses_dict, student_dict, instructor_dict, venue_dict = read_input_excel(file_name)
+    courses_dict, student_dict, instructor_dict, venue_dict = read_input_excel(
+        file_name
+    )
     number_of_students = len(student_dict)
     number_of_instructors = len(instructor_dict)
     number_of_venues = len(venue_dict)
-    number_of_working_days = 7
+    number_of_working_days = 5
     slots = 8
     venue_types = {}
     venue_type_campus = {}
@@ -267,22 +482,35 @@ def initialize_parameters(file_name):
             venue_types[temp1] = 1
 
         if temp1 not in venue_type_campus:
-            venue_type_campus[temp1] = {i:0 for i in range(number_of_campuses)}
+            venue_type_campus[temp1] = {i: 0 for i in range(number_of_campuses)}
 
         venue_type_campus[temp1][campus_list.index(temp2)] += 1
 
     venue_types_list = list(sorted(venue_types.keys()))
-    lab_types_list = venue_types_list[1:] 
+    lab_types_list = venue_types_list[1:]
     student_list = list(sorted(student_dict.keys()))
     instructor_list = list(sorted(instructor_dict.keys()))
-    venue_list = list(sorted(venue_dict.keys(), key=lambda x: (venue_dict[x].type, venue_dict[x].campus_type)))
+    venue_list = list(
+        sorted(
+            venue_dict.keys(),
+            key=lambda x: (venue_dict[x].type, venue_dict[x].campus_type),
+        )
+    )
     venue_setups = np.array([venue_dict[i].number_of_setups for i in venue_list])
-    venue_campus = np.array([campus_list.index(venue_dict[i].campus_type) for i in venue_list])
+    venue_campus = np.array(
+        [campus_list.index(venue_dict[i].campus_type) for i in venue_list]
+    )
 
-    lecture_splitting(courses_dict, campus_list, venue_campus, venue_types, venue_setups)
-    practical_splitting(courses_dict, campus_list, venue_campus, venue_types, venue_setups)
+    # lecture_splitting(
+    #     courses_dict, campus_list, venue_campus, venue_types, venue_setups
+    # )
+    # practical_splitting(
+    #     courses_dict, campus_list, venue_campus, venue_types, venue_setups
+    # )
     course_list = list(sorted(courses_dict.keys()))
-    course_campus = np.array([campus_list.index(courses_dict[i].campus_type) for i in course_list])
+    course_campus = np.array(
+        [campus_list.index(courses_dict[i].campus_type) for i in course_list]
+    )
     number_of_courses = len(courses_dict)
     course_lab = np.zeros((number_of_courses, 2))
     students_Courses = np.zeros((number_of_students, number_of_courses))
@@ -294,9 +522,21 @@ def initialize_parameters(file_name):
     pre_half_sem_courses = []
     post_half_sem_courses = []
 
-    for i, j in enumerate(student_list):
+    # for printing purposes
+    groups = sorted(
+        set(
+            [
+                group
+                for course_object in courses_dict.values()
+                for group in course_object.groups
+            ]
+        )
+    )
+    groups_courses = np.zeros((len(groups), number_of_courses))
 
-        for course in student_dict[j].courses :
+
+    for i, j in enumerate(student_list):
+        for course in student_dict[j].courses:
             course_index = course_list.index(course.code)
             type_of_course = student_dict[j].courses[course]
             student_course_priority[i][course_index] = type_of_course
@@ -344,11 +584,14 @@ def initialize_parameters(file_name):
         else:
             post_half_sem_courses.append(i)
 
+        for group in courses_dict[j].groups:
+            group_index = groups.index(group)
+            groups_courses[group_index][i] = 1
+
         # if courses_dict[j].mode == 'Online':
         #     course_strength[i] = 0
-
     course_credits = np.c_[course_credits, np.sum(course_credits, axis=1)]
-        
+
     parameters = classes.Params()
     parameters.number_of_working_days = number_of_working_days
     parameters.slots = slots
@@ -385,6 +628,9 @@ def initialize_parameters(file_name):
     parameters.instructor_list = instructor_list
     make_baskets(parameters)
 
+    parameters.groups = groups
+    parameters.groups_courses = groups_courses
+
     # nso_index = parameters.course_list.index("NO 101/NO 103")
     # course_list = list(np.arange(parameters.number_of_courses))
     # course_list.remove(nso_index)
@@ -392,266 +638,423 @@ def initialize_parameters(file_name):
     # print(nso_index)
     # print(course_list)
     # print(parameters.course_list)
+
+    # print(parameters.groups.index('UG_2023'))
+    # print(parameters.groups_courses[17])
     # exit(1)
 
     return parameters
 
 
-def initialize_model(parameters : classes.Params):
+def initialize_model(parameters: classes.Params):
     my_model = gp.Model("Timetable")
     my_model.Params.LogFile = "m.log"
     # my_model.setParam("LogToConsole", 0)
-    my_model.Params.TimeLimit = float('infinity')
+    my_model.Params.TimeLimit = float("infinity")
 
     my_model.Params.MIPFocus = 1
-    my_model.Params.MinRelNodes = 1e7
+    # my_model.Params.MinRelNodes = 1e7
     # my_model.Params.PumpPasses = 1e7
     # my_model.Params.ZeroObjNodes = 1e7
     # my_model.Params.ImproveStartNodes = 1
     # my_model.Params.Presolve = 2
-    my_model.Params.Heuristics = 0.3
+    # my_model.Params.Heuristics = 0.3
     # my_model.Params.NodeMethod = 2
     # my_model.Params.MIPGap = 3e-2
-    schedule = my_model.addMVar((parameters.number_of_working_days, parameters.slots, parameters.number_of_venues,
-                                    parameters.number_of_courses), vtype=GRB.BINARY,
-                                name="time")
+    schedule = my_model.addMVar(
+        (
+            parameters.number_of_working_days,
+            parameters.slots,
+            parameters.number_of_venues,
+            parameters.number_of_courses,
+        ),
+        vtype=GRB.BINARY,
+        name="time",
+    )
     return my_model, schedule
 
 
-def constr_One_Venue_One_Course(my_model, schedule, parameters : classes.Params) :
+def constr_One_Venue_One_Course(my_model, schedule, parameters: classes.Params):
     # x1 = schedule.sum(axis=3)
-    x1 = schedule[:, :, :parameters.venue_types[parameters.venue_types_list[0]], parameters.full_sem_courses + parameters.pre_half_sem_courses].sum(axis=3)
-    my_model.addConstrs(((x1[i, j, k] <= 1) for i in range(parameters.number_of_working_days)
-                         for j in range(parameters.slots) 
-                         for k in range(parameters.venue_types[parameters.venue_types_list[0]])), name="One_Venue_One_Course_Pre_Sem")
-    
-    x1 = schedule[:, :, :parameters.venue_types[parameters.venue_types_list[0]], parameters.full_sem_courses + parameters.post_half_sem_courses].sum(axis=3)
-    my_model.addConstrs(((x1[i, j, k] <= 1) for i in range(parameters.number_of_working_days)
-                         for j in range(parameters.slots) 
-                         for k in range(parameters.venue_types[parameters.venue_types_list[0]])), name="One_Venue_One_Course_Post_Sem")
-    
-    return
-
-def constr_No_course_Overlap_Student(my_model, schedule, parameters : classes.Params):
-    
-    x1 = schedule.sum(axis=2)
-
-    constrs = []
-    # least_priority = int(np.max(parameters.student_course_priority))
-
-    # for priority in range(0, least_priority + 1):
-    # # for priority in range(0, 4):
-    #     temp1 = []
-    #     temp2 = []
-    #     for i in range(parameters.number_of_working_days):
-    #         for j in range(parameters.slots):
-    #             for k in range(parameters.number_of_students):
-    #                 courses_1 = np.intersect1d(parameters.full_sem_courses + parameters.pre_half_sem_courses, np.where(parameters.student_course_priority[k] == priority)[0])
-    #                 courses_2 = np.intersect1d(parameters.full_sem_courses + parameters.post_half_sem_courses, np.where(parameters.student_course_priority[k] == priority)[0])
-    #                 if courses_1.size > 0:
-    #                     temp1.append(my_model.addConstr(
-    #                         x1[i, j, courses_1].sum() <= 1,
-    #                         name="No_course_Overlap_Student_Pre_Sem" + "_" + str(priority)))
-
-    #                 if courses_2.size > 0:
-    #                     temp2.append(my_model.addConstr(
-    #                         x1[i, j, courses_2].sum() <= 1,
-    #                         name="No_course_Overlap_Student_Post_Sem" + "_" + str(priority)))
-
-    #     if priority != 0 :
-    #         constrs.append([temp1, temp2])
-
-    for i in range(parameters.number_of_working_days):
-        for j in range(parameters.slots):
-            for basket in parameters.baskets:
-                my_model.addConstr(
-                    x1[i, j, np.array(basket)].sum() <= 1,
-                    name="No_course_Overlap_Student")
-    
-
-    return constrs
-
-
-def constr_No_course_Overlap_Professor(my_model, schedule, parameters : classes.Params):
-    x1 = schedule[:, :, :, parameters.full_sem_courses + parameters.pre_half_sem_courses].sum(axis=2)
-    x2 = schedule[:, :, :, parameters.full_sem_courses + parameters.post_half_sem_courses].sum(axis=2)
-    for i in range(parameters.number_of_working_days):
-        for j in range(parameters.slots):
-            for k in range(parameters.number_of_instructors):
-                my_model.addConstr(
-                    (x1[i, j] * parameters.instructors_Courses[k][parameters.full_sem_courses + parameters.pre_half_sem_courses]).sum() <= 1, 
-                    name="No_course_Overlap_Professor_Pre_Sem")
-
-                my_model.addConstr(
-                    (x2[i, j] * parameters.instructors_Courses[k][parameters.full_sem_courses + parameters.post_half_sem_courses]).sum() <= 1, 
-                    name="No_course_Overlap_Professor_Post_Sem") 
-
-    return
-
-
-def constr_One_Slot_Course_Once(my_model, schedule, parameters : classes.Params):
-    # I will add groups later
-    x1 = schedule.sum(axis=2)
-    my_model.addConstrs(((x1[i, j, k] <= 1) for i in range(parameters.number_of_working_days)
-                         for j in range(parameters.slots) for k in range(parameters.number_of_courses)), name="One_Slot_Course_Once")
-    return
-    
-# number_of_labs,
-def constr_Course_only_Once_a_day(my_model, schedule, parameters : classes.Params):
-    x1 = schedule[:,:,:parameters.venue_types[parameters.venue_types_list[0]], :].sum(axis=2)
-    x2 = x1.sum(axis=1)
-    my_model.addConstrs(((x2[i, j] <= 1) for i in range(parameters.number_of_working_days) for j in range(parameters.number_of_courses)),
-                        name="Course_only_Once_a_day_0")
-    
-    x1 = schedule.sum(axis=2)
-    x2 = x1.sum(axis=1)
-    my_model.addConstrs(((x2[i, j] <= (parameters.course_credits[j, -2] + 1))
-                            for i in range(parameters.number_of_working_days) for j in range(parameters.number_of_courses)),
-                        name="Course_only_Once_a_day_1")
-    return
-
-# def constr_Lab_only_Once_a_day(my_model, schedule, number_of_working_days, number_of_courses, number_of_labs):
-#     x2 = schedule[:,:, -number_of_labs:, :].sum(axis=2)
-#     x3 = x2.sum(axis=1)
-#     my_model.addConstrs(((x3[i, j] <= 3) for i in range(number_of_working_days) for j in range(number_of_courses)),
-#                         name="Course_only_Once_a_day")
-#     return
-
-def constr_Total_Credits_of_core_Course(my_model, schedule, parameters : classes.Params):
-    x1 = schedule.sum(axis=2)
-    x2 = x1.sum(axis=1)
-    x2 = x2.sum(axis=0)
+    x1 = schedule[
+        :,
+        :,
+        : parameters.venue_types[parameters.venue_types_list[0]],
+        parameters.full_sem_courses + parameters.pre_half_sem_courses,
+    ].sum(axis=3)
     my_model.addConstrs(
-        ((x2[i] == parameters.course_credits[i, -1]) for i in range(parameters.number_of_courses)),
-                        name="Total_Credits_of_core_Course"
-                        )
-    return
+        (
+            (x1[i, j, k] <= 1)
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+            for k in range(parameters.venue_types[parameters.venue_types_list[0]])
+        ),
+        name="One_Venue_One_Course_Pre_Sem",
+    )
 
-# number_of_labs,
-def constr_Total_lab_hours_of_Course(my_model, schedule, parameters : classes.Params):
-    my_sum = parameters.venue_types[parameters.venue_types_list[0]]
-    for lab in parameters.lab_types_list:
-        x1 = schedule[:, :, my_sum: my_sum + parameters.venue_types[lab], :]
-        my_sum += parameters.venue_types[lab]
-        x2 = x1.sum(axis=2)
-        x2 = x2.sum(axis=1)
-        x2 = x2.sum(axis=0)
-        my_model.addConstrs(((x2[i] == parameters.course_credits[i, -2]) 
-                             if parameters.course_lab[i][1] == lab else (x2[i] == 0) for i in range(parameters.number_of_courses) ),
-                            name="Total_lab_hours_of_Course")
-    return
-
-
-def constr_venue_setups(my_model, schedule, parameters : classes.Params):
-    x1 = schedule.sum(axis=1)
-    x1 = x1.sum(axis=0)
-    my_model.addConstrs(((x1[i, j] == 0) for i in range(parameters.number_of_venues) for j in range(parameters.number_of_courses) if
-                         parameters.course_strength[j] > parameters.venue_setups[i] * parameters.course_lab[j][0]), name="venue_setups")
-    return
-
-
-def constrs_Allowed_Lab_Time(my_model, schedule, parameters : classes.Params):
-    my_sum = parameters.venue_types[parameters.venue_types_list[0]]
-    for lab in parameters.lab_types_list:
-        total_venues = parameters.venue_types[lab]
-        x1 = schedule[:, :, my_sum : my_sum + total_venues, :]
-        my_sum += total_venues
-        # x11 = x4.sum(axis=3)
-
-        my_model.addConstrs(
-            ( (gp.quicksum(x1[i, j, k, l] for j in range(parameters.slots) ) <= parameters.course_credits[l, -2]) if parameters.course_lab[l][1] == lab 
-              else (gp.quicksum(x1[i, j, k, l] for j in range(parameters.slots) ) == 0)
-              for i in range(parameters.number_of_working_days)
-              for k in range(total_venues) for l in range(parameters.number_of_courses)),
-              name="Hours_A_day_of_Lab")
-
-        y = my_model.addMVar((parameters.number_of_working_days, total_venues, parameters.number_of_courses,  parameters.slots+1), vtype=GRB.BINARY)
-        # constr_indicator_1(my_model, number_of_working_days, number_of_labs, number_of_courses, y)
-        
-        # constr_indicator_2(my_model, number_of_working_days, number_of_labs, number_of_courses, y)
-
-
-        my_model.addConstrs(
-            ((gp.quicksum(y[i, j, k, l] for l in range(parameters.slots+1)) == 1) for i in range(parameters.number_of_working_days) for j in range(total_venues)
-            for k in range(parameters.number_of_courses) if parameters.course_lab[k][1] == lab ),
-            name="indicator_0")
-
-        my_model.addConstrs(((y[i, k, l, parameters.slots].item() == 1) >> (gp.quicksum(x1[i, j, k, l] for j in range(parameters.slots)) == 0)
-                            for i in range(parameters.number_of_working_days) for k in range(total_venues) for l in range(parameters.number_of_courses) 
-                            if parameters.course_lab[l][1] == lab ),
-                            name="Allowed_Lab_Time_10")
-
-        # for l in range(number_of_courses):
-
-        #     current_credits = int(course_credits[l][-2])
-        #     if current_credits > 0:
-        #         for t in range(0, 5 - int(int(course_credits[l][-2]))):
-
-        my_model.addConstrs(
-            ( (y[i, k, l, t].item() == 1) >> (gp.quicksum(x1[i, j, k, l] for j in range(t, t + int(parameters.course_credits[l][-2]))) == int(parameters.course_credits[l][-2]))
-                            for i in range(parameters.number_of_working_days) 
-                            for k in range(total_venues) for l in range(parameters.number_of_courses)
-                            for t in range(0, 5 - int(parameters.course_credits[l][-2]))  
-                            if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
-                            name="Allowed_Lab_Time_0")
-                    
-        my_model.addConstrs(
-            ((gp.quicksum(y[i, j, l, t] for t in range(5 - int(parameters.course_credits[l][-2]), 4)) == 0) 
-                for i in range(parameters.number_of_working_days) for j in range(total_venues)
-                for l in range(parameters.number_of_courses) 
-                if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab  ),
-            name="indicator_1")
-                    
-                # for t in range(4, 9 - int(int(course_credits[l][-2]))):
-        my_model.addConstrs(((y[i, k, l, t].item() == 1) >> 
-                                (gp.quicksum(x1[i, j, k, l] for j in range(t, t + int(parameters.course_credits[l][-2]))) == int(parameters.course_credits[l][-2]))
-                                for i in range(parameters.number_of_working_days) for k in range(total_venues)
-                                for l in range(parameters.number_of_courses) 
-                                for t in range(4, parameters.slots + 1 - int(parameters.course_credits[l][-2])) 
-                                if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
-                            name="Allowed_Lab_Time_1")
-                    
-        my_model.addConstrs(
-            ((gp.quicksum(y[i, j, l, t] for t in range(parameters.slots + 1 - int(parameters.course_credits[l][-2]), parameters.slots)) == 0) 
-            for i in range(parameters.number_of_working_days) for j in range(total_venues)
-            for l in range(parameters.number_of_courses) 
-            if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
-            name="indicator_2")
-                
-    return
-
-
-def constrs_Non_Minor_Core_Course(my_model, schedule, parameters : classes.Params):
-    x1 = schedule.sum(axis=2)
-    for _, k1 in np.ndenumerate(np.where(parameters.non_minor_core_course == 1)[0]):
-        for _, k2 in np.ndenumerate(np.where(parameters.non_minor_core_course == 2)[0]):
-            my_model.addConstrs(
-                ((x1[i, j, k1] + x1[i, j, k2] <= 1) for i in range(parameters.number_of_working_days) for j in range(parameters.slots)),
-                name="Non_Minor_Core_Course"
-            )
-
-    return
-
-
-def constrs_Course_Campus(my_model, schedule, parameters : classes.Params):
-    x = schedule.sum(axis=1)
-    x = x.sum(axis=0)
+    x1 = schedule[
+        :,
+        :,
+        : parameters.venue_types[parameters.venue_types_list[0]],
+        parameters.full_sem_courses + parameters.post_half_sem_courses,
+    ].sum(axis=3)
     my_model.addConstrs(
-        ((x[i, j] == 0) for i in range(parameters.number_of_venues) 
-            for j in range(parameters.number_of_courses) if parameters.venue_campus[i] != parameters.course_campus[j]),
-        name="Campus_Constraint"
+        (
+            (x1[i, j, k] <= 1)
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+            for k in range(parameters.venue_types[parameters.venue_types_list[0]])
+        ),
+        name="One_Venue_One_Course_Post_Sem",
     )
 
     return
 
 
-def constrs_Student_Campus(my_model, schedule, parameters : classes.Params) :
-    x = schedule.sum(axis=2)
-    y = my_model.addMVar((parameters.number_of_working_days, parameters.slots, parameters.number_of_courses), vtype=GRB.BINARY)
+def constr_No_course_Overlap_Student(my_model, schedule, parameters: classes.Params):
+    x1 = schedule.sum(axis=2)
+
+    # constrs = []
+    # least_priority = int(np.max(parameters.student_course_priority))
+
+    # for priority in range(0, least_priority + 1):
+    # for priority in range(0, 4):
+    # temp1 = []
+    # temp2 = []
+    # for i in range(parameters.number_of_working_days):
+    #     for j in range(parameters.slots):
+    #         for k in range(parameters.number_of_students):
+    #             courses_1 = np.intersect1d(parameters.full_sem_courses + parameters.pre_half_sem_courses, np.where(parameters.student_course_priority[k] == priority)[0])
+    #             courses_2 = np.intersect1d(parameters.full_sem_courses + parameters.post_half_sem_courses, np.where(parameters.student_course_priority[k] == priority)[0])
+    #             if courses_1.size > 0:
+    #                 temp1.append(my_model.addConstr(
+    #                     x1[i, j, courses_1].sum() <= 1,
+    #                     name="No_course_Overlap_Student_Pre_Sem" + "_" + str(priority)))
+
+    #             if courses_2.size > 0:
+    #                 temp2.append(my_model.addConstr(
+    #                     x1[i, j, courses_2].sum() <= 1,
+    #                     name="No_course_Overlap_Student_Post_Sem" + "_" + str(priority)))
+
+    # if priority != 0 :
+    #     constrs.append([temp1, temp2])
+
+    for i in range(parameters.number_of_working_days):
+        for j in range(parameters.slots):
+            for basket in parameters.baskets_core:
+                my_model.addConstr(
+                    x1[i, j, np.array(basket)].sum() <= 1,
+                    name="No_core_course_Overlap_Student",
+                )
+
+    # return constrs
+    return
+
+
+def constr_No_course_Overlap_Professor(my_model, schedule, parameters: classes.Params):
+    x1 = schedule[
+        :, :, :, parameters.full_sem_courses + parameters.pre_half_sem_courses
+    ].sum(axis=2)
+    x2 = schedule[
+        :, :, :, parameters.full_sem_courses + parameters.post_half_sem_courses
+    ].sum(axis=2)
+    for i in range(parameters.number_of_working_days):
+        for j in range(parameters.slots):
+            for k in range(parameters.number_of_instructors):
+                my_model.addConstr(
+                    (
+                        x1[i, j]
+                        * parameters.instructors_Courses[k][
+                            parameters.full_sem_courses
+                            + parameters.pre_half_sem_courses
+                        ]
+                    ).sum()
+                    <= 1,
+                    name="No_course_Overlap_Professor_Pre_Sem",
+                )
+
+                my_model.addConstr(
+                    (
+                        x2[i, j]
+                        * parameters.instructors_Courses[k][
+                            parameters.full_sem_courses
+                            + parameters.post_half_sem_courses
+                        ]
+                    ).sum()
+                    <= 1,
+                    name="No_course_Overlap_Professor_Post_Sem",
+                )
+
+    return
+
+
+def constr_One_Slot_Course_Once(my_model, schedule, parameters: classes.Params):
+    # I will add groups later
+    x1 = schedule.sum(axis=2)
     my_model.addConstrs(
-        ((x[i, j, k] == y[i, j, k]) for i in range(parameters.number_of_working_days) 
-        for j in range(parameters.slots) for k in range(parameters.number_of_courses)),
-        name = "Conditional_Constraint"
+        (
+            (x1[i, j, k] <= 1)
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+            for k in range(parameters.number_of_courses)
+        ),
+        name="One_Slot_Course_Once",
+    )
+    return
+
+
+# number_of_labs,
+def constr_Course_only_Once_a_day(my_model, schedule, parameters: classes.Params):
+    x1 = schedule[
+        :, :, : parameters.venue_types[parameters.venue_types_list[0]], :
+    ].sum(axis=2)
+    x2 = x1.sum(axis=1)
+    my_model.addConstrs(
+        (
+            (x2[i, j] <= 1)
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.number_of_courses)
+        ),
+        name="Course_only_Once_a_day_0",
+    )
+
+    x1 = schedule.sum(axis=2)
+    x2 = x1.sum(axis=1)
+    my_model.addConstrs(
+        (
+            (x2[i, j] <= (parameters.course_credits[j, -2] + 1))
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.number_of_courses)
+        ),
+        name="Course_only_Once_a_day_1",
+    )
+    return
+
+
+def constr_Total_Credits_of_core_Course(my_model, schedule, parameters: classes.Params):
+    x1 = schedule.sum(axis=2)
+    x2 = x1.sum(axis=1)
+    x2 = x2.sum(axis=0)
+    my_model.addConstrs(
+        (
+            (x2[i] == parameters.course_credits[i, -1])
+            for i in range(parameters.number_of_courses)
+        ),
+        name="Total_Credits_of_core_Course",
+    )
+    return
+
+
+# number_of_labs,
+def constr_Total_lab_hours_of_Course(my_model, schedule, parameters: classes.Params):
+    my_sum = parameters.venue_types[parameters.venue_types_list[0]]
+    for lab in parameters.lab_types_list:
+        x1 = schedule[:, :, my_sum : my_sum + parameters.venue_types[lab], :]
+        my_sum += parameters.venue_types[lab]
+        x2 = x1.sum(axis=2)
+        x2 = x2.sum(axis=1)
+        x2 = x2.sum(axis=0)
+        my_model.addConstrs(
+            (
+                (x2[i] == parameters.course_credits[i, -2])
+                if parameters.course_lab[i][1] == lab
+                else (x2[i] == 0)
+                for i in range(parameters.number_of_courses)
+            ),
+            name="Total_lab_hours_of_Course",
+        )
+    return
+
+
+def constr_venue_setups(my_model, schedule, parameters: classes.Params):
+    x1 = schedule.sum(axis=1)
+    x1 = x1.sum(axis=0)
+    my_model.addConstrs(
+        (
+            (x1[i, j] == 0)
+            for i in range(parameters.number_of_venues)
+            for j in range(parameters.number_of_courses)
+            if parameters.course_strength[j]
+            > parameters.venue_setups[i] * parameters.course_lab[j][0]
+        ),
+        name="venue_setups",
+    )
+    return
+
+
+def constrs_Allowed_Lab_Time(my_model, schedule, parameters: classes.Params):
+    my_sum = parameters.venue_types[parameters.venue_types_list[0]]
+    for lab in parameters.lab_types_list:
+        total_venues = parameters.venue_types[lab]
+        x1 = schedule[:, :, my_sum : my_sum + total_venues, :]
+        x2 = x1.sum(axis=1)
+        my_sum += total_venues
+
+        # my_model.addConstrs(
+        #     ( (x2[i, k, l] <= parameters.course_credits[l, -2]) if parameters.course_lab[l][1] == lab
+        #       else (x2[i, k, l] == 0)
+        #       for i in range(parameters.number_of_working_days)
+        #       for k in range(total_venues) for l in range(parameters.number_of_courses)),
+        #       name="Hours_A_day_of_Lab")
+
+        y = my_model.addMVar(
+            (
+                parameters.number_of_working_days,
+                total_venues,
+                parameters.number_of_courses,
+                parameters.slots + 1,
+            ),
+            vtype=GRB.BINARY,
+        )
+
+        my_model.addConstrs(
+            (
+                (gp.quicksum(y[i, j, k, l] for l in range(parameters.slots + 1)) == 1)
+                for i in range(parameters.number_of_working_days)
+                for j in range(total_venues)
+                for k in range(parameters.number_of_courses)
+                if parameters.course_lab[k][1] == lab
+            ),
+            name="indicator_0",
+        )
+
+        # my_model.addConstrs(((y[i, k, l, parameters.slots].item() == 1) >> (gp.quicksum(x1[i, j, k, l] for j in range(parameters.slots)) == 0)
+        #                     for i in range(parameters.number_of_working_days) for k in range(total_venues) for l in range(parameters.number_of_courses)
+        #                     if parameters.course_lab[l][1] == lab ),
+        #                     name="Allowed_Lab_Time_10")
+
+        # my_model.addConstrs(
+        #     ( (y[i, k, l, t].item() == 1) >> (gp.quicksum(x1[i, j, k, l] for j in range(t, t + int(parameters.course_credits[l][-2]))) == int(parameters.course_credits[l][-2]))
+        #                     for i in range(parameters.number_of_working_days)
+        #                     for k in range(total_venues) for l in range(parameters.number_of_courses)
+        #                     for t in range(0, 5 - int(parameters.course_credits[l][-2]))
+        #                     if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
+        #                     name="Allowed_Lab_Time_0")
+
+        # my_model.addConstrs(
+        #     ((gp.quicksum(y[i, j, l, t] for t in range(5 - int(parameters.course_credits[l][-2]), 4)) == 0)
+        #         for i in range(parameters.number_of_working_days) for j in range(total_venues)
+        #         for l in range(parameters.number_of_courses)
+        #         if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab  ),
+        #     name="indicator_1")
+
+        # my_model.addConstrs(((y[i, k, l, t].item() == 1) >>
+        #                         (gp.quicksum(x1[i, j, k, l] for j in range(t, t + int(parameters.course_credits[l][-2]))) == int(parameters.course_credits[l][-2]))
+        #                         for i in range(parameters.number_of_working_days) for k in range(total_venues)
+        #                         for l in range(parameters.number_of_courses)
+        #                         for t in range(4, parameters.slots + 1 - int(parameters.course_credits[l][-2]))
+        #                         if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
+        #                     name="Allowed_Lab_Time_1")
+
+        # my_model.addConstrs(
+        #     ((gp.quicksum(y[i, j, l, t] for t in range(parameters.slots + 1 - int(parameters.course_credits[l][-2]), parameters.slots)) == 0)
+        #     for i in range(parameters.number_of_working_days) for j in range(total_venues)
+        #     for l in range(parameters.number_of_courses)
+        #     if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
+        #     name="indicator_2")
+
+        #
+
+        for i in range(parameters.number_of_working_days):
+            for k in range(total_venues): 
+                for l in range(parameters.number_of_courses):
+                    for t in range(0, parameters.slots + 1 - int(parameters.course_credits[l][-2])):
+                        if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab:
+                            my_model.addConstr(
+                                ( (y[i, k, l, t].item() == 1) >> (gp.quicksum(x1[i, j, k, l] for j in range(t, t + int(parameters.course_credits[l][-2]))) == int(parameters.course_credits[l][-2])) )
+                                    , name="Allowed_Lab_Time_0")
+                            
+                            my_model.addConstr(
+                                ( (y[i, k, l, t].item() == 1) >> (gp.quicksum(x1[i, j, k, l] for j in chain(range(0, t), range(t + int(parameters.course_credits[l][-2]), parameters.slots))) == 0) )
+                                    , name="Allowed_Lab_Time_1")
+                                    
+
+
+        for i in range(parameters.number_of_working_days):
+            for j in range(total_venues):
+                for l in range(parameters.number_of_courses):
+                    if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab:
+                        my_model.addConstr( gp.quicksum(y[i, j, l, t] for t in range(5 - int(parameters.course_credits[l][-2]), 4)) == 0, name="indicator_1" )
+                        my_model.addConstr( gp.quicksum(y[i, j, l, t] for t in range(parameters.slots + 1 - int(parameters.course_credits[l][-2]), parameters.slots)) == 0, name="indicator_2" )
+        # my_model.addConstrs(
+        #     ((gp.quicksum(y[i, j, l, t] for t in range(parameters.slots + 1 - int(parameters.course_credits[l][-2]), parameters.slots)) == 0)
+        #     for i in range(parameters.number_of_working_days) for j in range(total_venues)
+        #     for l in range(parameters.number_of_courses)
+        #     if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab ),
+        #     name="indicator_2")
+
+        # my_model.addConstrs(
+        #     (
+        #         gp.quicksum(
+        #             y[i, k, l, t] * x1[i, t : t + int(parameters.course_credits[l][-2]), k, l].sum()
+        #             for t in chain(
+        #                 range(0, 5 - int(parameters.course_credits[l][-2])),
+        #                 range(4, parameters.slots + 1 - int(parameters.course_credits[l][-2])),
+        #             )
+        #         ) + y[i, k, l, parameters.slots] * x1[i, :, k, l].sum()
+        #         == int(parameters.course_credits[l][-2]) * (1 - y[i, k, l, parameters.slots])
+
+        #         if int(parameters.course_credits[l][-2]) > 0 and parameters.course_lab[l][1] == lab else x1[i, :, k, l].sum() == 0
+        #         for i in range(parameters.number_of_working_days)
+        #         for k in range(total_venues)
+        #         for l in range(parameters.number_of_courses)
+        #     ),
+        #     name="Allowed_Lab_Time_0",
+        # )
+
+    return
+
+
+def constrs_Non_Minor_Core_Course(my_model, schedule, parameters: classes.Params):
+    x1 = schedule.sum(axis=2)
+    for _, k1 in np.ndenumerate(np.where(parameters.non_minor_core_course == 1)[0]):
+        for _, k2 in np.ndenumerate(np.where(parameters.non_minor_core_course == 2)[0]):
+            my_model.addConstrs(
+                (
+                    (x1[i, j, k1] + x1[i, j, k2] <= 1)
+                    for i in range(parameters.number_of_working_days)
+                    for j in range(parameters.slots)
+                ),
+                name="Non_Minor_Core_Course",
+            )
+
+    return
+
+
+def constrs_Course_Campus(my_model, schedule, parameters: classes.Params):
+    x = schedule.sum(axis=1)
+    x = x.sum(axis=0)
+    my_model.addConstrs(
+        (
+            (x[i, j] == 0)
+            for i in range(parameters.number_of_venues)
+            for j in range(parameters.number_of_courses)
+            if parameters.venue_campus[i] != parameters.course_campus[j]
+        ),
+        name="Campus_Constraint",
+    )
+
+    return
+
+
+def constrs_Student_Campus(my_model, schedule, parameters: classes.Params):
+    x = schedule.sum(axis=2)
+    y = my_model.addMVar(
+        (
+            parameters.number_of_working_days,
+            parameters.slots,
+            parameters.number_of_courses,
+        ),
+        vtype=GRB.BINARY,
+    )
+    my_model.addConstrs(
+        (
+            x[i, j, k] == y[i, j, k]
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+            for k in range(parameters.number_of_courses)
+        ),
+        name="Conditional_Constraint",
     )
 
     for student in range(parameters.number_of_students):
@@ -661,30 +1064,52 @@ def constrs_Student_Campus(my_model, schedule, parameters : classes.Params) :
             # print(parameters.campus_list[campus])
             current_campus_courses = np.where(parameters.course_campus == campus)[0]
             not_current_campus_courses = np.where(parameters.course_campus != campus)[0]
-            current_campus_student_courses = list(np.intersect1d(student_courses, current_campus_courses))
-            not_current_campus_student_courses = np.intersect1d(student_courses, not_current_campus_courses)
+            current_campus_student_courses = list(
+                np.intersect1d(student_courses, current_campus_courses)
+            )
+            current_campus_student_courses = np.intersect1d(
+                student_courses, current_campus_courses
+            )
+            not_current_campus_student_courses = np.intersect1d(
+                student_courses, not_current_campus_courses
+            )
 
-            # for l in current_campus_student_course:
-                # for j in range(parameters.slots - 1):
-            
-            if len(current_campus_student_courses)*not_current_campus_student_courses.size > 0:
+            if (
+                len(current_campus_student_courses)
+                * not_current_campus_student_courses.size
+                > 0
+            ):
                 my_model.addConstrs(
-                    (((y[i, j, k].item() == 1) >> (gp.quicksum(x[i, j+1, not_current_campus_student_courses]) == 0)) 
-                    for i in range(parameters.number_of_working_days) for j in range(parameters.slots - 1)
-                    for k in current_campus_student_courses),
-                    name = "Student_Campus_Constraint"
+                    (
+                        ((y[i, j, k].item() == 1) >> (gp.quicksum(x[i, j + 1, not_current_campus_student_courses]) == 0))
+                        for i in range(parameters.number_of_working_days)
+                        for j in chain(range(3), range(4, parameters.slots - 1)) # separate breaks
+                        for k in current_campus_student_courses
+                    ),
+                    name="Student_Campus_Constraint",
                 )
 
     return
 
 
-def constrs_Professor_Campus(my_model, schedule, parameters : classes.Params) :
+def constrs_Professor_Campus(my_model, schedule, parameters: classes.Params):
     x = schedule.sum(axis=2)
-    y = my_model.addMVar((parameters.number_of_working_days, parameters.slots, parameters.number_of_courses), vtype=GRB.BINARY)
+    y = my_model.addMVar(
+        (
+            parameters.number_of_working_days,
+            parameters.slots,
+            parameters.number_of_courses,
+        ),
+        vtype=GRB.BINARY,
+    )
     my_model.addConstrs(
-        ((x[i, j, k] == y[i, j, k]) for i in range(parameters.number_of_working_days) 
-        for j in range(parameters.slots) for k in range(parameters.number_of_courses)),
-        name = "Conditional_Constraint"
+        (
+            x[i, j, k] == y[i, j, k]
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+            for k in range(parameters.number_of_courses)
+        ),
+        name="Conditional_Constraint",
     )
 
     for instructor in range(parameters.number_of_instructors):
@@ -693,93 +1118,113 @@ def constrs_Professor_Campus(my_model, schedule, parameters : classes.Params) :
         for campus in range(parameters.number_of_campuses):
             current_campus_courses = np.where(parameters.course_campus == campus)[0]
             not_current_campus_courses = np.where(parameters.course_campus != campus)[0]
-            current_campus_instructor_courses = list(np.intersect1d(instructor_courses, current_campus_courses))
-            not_current_campus_instructor_courses = np.intersect1d(instructor_courses, not_current_campus_courses)
+            current_campus_instructor_courses = list(
+                np.intersect1d(instructor_courses, current_campus_courses)
+            )
+            current_campus_instructor_courses = np.intersect1d(
+                instructor_courses, current_campus_courses
+            )
+            not_current_campus_instructor_courses = np.intersect1d(
+                instructor_courses, not_current_campus_courses
+            )
 
-            # for l in current_campus_student_course:
-                # for j in range(parameters.slots - 1):
-            
-            if len(current_campus_instructor_courses)*not_current_campus_instructor_courses.size > 0:
+            if (
+                len(current_campus_instructor_courses)
+                * not_current_campus_instructor_courses.size
+                > 0
+            ):
                 my_model.addConstrs(
-                    (((y[i, j, k].item() == 1) >> (gp.quicksum(x[i, j+1, not_current_campus_instructor_courses]) == 0)) 
-                    for i in range(parameters.number_of_working_days) for j in range(parameters.slots - 1)
-                    for k in current_campus_instructor_courses),
-                    name = "Professor_Campus_Constraint"
+                    (
+                        ((y[i, j, k].item() == 1) >> (gp.quicksum(x[i, j + 1, not_current_campus_instructor_courses]) == 0))
+                        for i in range(parameters.number_of_working_days)
+                        for j in range(parameters.slots - 1)
+                        for k in current_campus_instructor_courses
+                    ),
+                    name="Professor_Campus_Constraint",
                 )
 
     return
 
 
-def sec_constrs_non_overlapping_periods(my_model, schedule, parameters : classes.Params) :
+def sec_constrs_non_overlapping_periods(my_model, schedule, parameters: classes.Params):
     classrooms = parameters.venue_types[parameters.venue_types_list[0]]
     x = schedule[:, :, :classrooms, :]
     x = x.sum(axis=2)
     x = x.sum(axis=0)
-    
+
     constraint = my_model.addConstrs(
-        ((x[i, j] <= 1) for i in range(parameters.slots) for j in range(parameters.number_of_courses)),
-        name="Sec_Constraint_Of_Non_Overlapping_Slots"
+        (
+            x[i, j] <= 1
+            for i in range(parameters.slots)
+            for j in range(parameters.number_of_courses)
+        ),
+        name="Sec_Constraint_Of_Non_Overlapping_Slots",
     )
     return constraint
 
 
-def sec_constrs_core_courses_before_break(my_model, schedule, parameters : classes.Params):
-    x1 = np.where(parameters.student_course_priority==0, 1, 0)
+def sec_constrs_core_courses_before_break(
+    my_model, schedule, parameters: classes.Params
+):
+    x1 = np.where(parameters.student_course_priority == 0, 1, 0)
     x1 = np.sum(x1, axis=0)
     x1 = np.where(x1 > 0)
     x1 = x1[0]
     number_of_core_courses = len(x1)
     # x1 contains indices for core courses
 
-    x1 = schedule[:, (parameters.slots - 1):, :, x1]
+    x1 = schedule[:, (parameters.slots - 1) :, :, x1]
     x1 = x1.sum(axis=2)
     x1 = x1.sum(axis=1)
     x1 = x1.sum(axis=0)
 
     constraint = my_model.addConstrs(
         ((x1[i] == 0) for i in range(number_of_core_courses)),
-        name="Sec_Constraint_Of_Core_Courses_In_Morning"
+        name="Sec_Constraint_Of_Core_Courses_In_Morning",
     )
     return constraint
 
 
-def sec_constrs_course_having_same_venue(my_model, schedule, parameters : classes.Params):
-    x = schedule[:, :, :parameters.venue_types[0], :].sum(axis=1)
+def sec_constrs_course_having_same_venue(
+    my_model, schedule, parameters: classes.Params):
+    x = schedule[:, :, : parameters.venue_types[0], :].sum(axis=1)
     x = x.sum(axis=0)
-    y = my_model.addMVar((parameters.venue_types[0], parameters.number_of_courses), vtype=GRB.BINARY)
+    y = my_model.addMVar(
+        (parameters.venue_types[0], parameters.number_of_courses), vtype=GRB.BINARY
+    )
 
     constraint = []
-    constraint.append(my_model.addConstrs(
-        (((y[i, j].item() == 1) >> (x[i, j] >= np.sum(parameters.course_credits[j][:2]))) 
-         for i in range(parameters.venue_types[0]) 
-         for j in range(parameters.number_of_courses)),
-         name = "Conditional Constraint_1" 
-    ))
+    constraint.append(
+        my_model.addConstrs(
+            (
+                ((y[i, j].item() == 1) >> (x[i, j] ==  np.sum(parameters.course_credits[j][:2])))
+                for i in range(parameters.venue_types[0])
+                for j in range(parameters.number_of_courses)
+            ),
+            name="Conditional Constraint_1",
+        )
+    )
 
-    constraint.append(my_model.addConstrs(
-        (((y[i, j].item() == 0) >> (x[i, j] == 0)) 
-         for i in range(parameters.venue_types[0]) 
-         for j in range(parameters.number_of_courses)),
-         name = "Conditional Constraint_2" 
-    ))
-
-    # temp_array = np.arange(parameters.venue_types[0])
-
-    # constraint = my_model.addConstrs(
-    #     (((y[i, j].item() == 1) >> (x[np.where(temp_array != i), j].sum() == 0)) for i in range(parameters.number_of_venues)
-    #      for j in range(parameters.number_of_courses)),
-    #      name="Sec_Constraint_Of_Course_Having_Single_Venue"
-    # )
+    constraint.append(
+        my_model.addConstrs(
+            (
+                ((y[i, j].item() == 0) >> (x[i, j] == 0))
+                for i in range(parameters.venue_types[0])
+                for j in range(parameters.number_of_courses)
+            ),
+            name="Conditional Constraint_2",
+        )
+    )
 
     return constraint
 
 
-def experimental_constraint(my_model, schedule, parameters : classes.Params):
+def experimental_constraint(my_model, schedule, parameters: classes.Params):
     # x = schedule[:, :, :parameters.venue_types[0], :]
     # x = x.sum(axis=2)
 
     # my_model.addConstrs(
-    #     (((x[i, j]*parameters.course_strength).sum() >= (x[i, j + 1]*parameters.course_strength).sum()) 
+    #     (((x[i, j]*parameters.course_strength).sum() >= (x[i, j + 1]*parameters.course_strength).sum())
     #      for i in range(parameters.number_of_working_days) for j in range(parameters.slots - 1)),
     #     name="Experimental Constraint"
     # )
@@ -788,7 +1233,7 @@ def experimental_constraint(my_model, schedule, parameters : classes.Params):
     # x = x.sum(axis=2)
 
     # my_model.addConstrs(
-    #     (((x[i, j]*parameters.course_strength).sum() <= (x[i, j+1]*parameters.course_strength).sum()) 
+    #     (((x[i, j]*parameters.course_strength).sum() <= (x[i, j+1]*parameters.course_strength).sum())
     #      for i in range(parameters.number_of_working_days) for j in range(parameters.slots - 1)),
     #     name="Experimental Constraint"
     # )
@@ -797,20 +1242,23 @@ def experimental_constraint(my_model, schedule, parameters : classes.Params):
     course_list.remove(nso_index)
     course_list = np.array(course_list)
 
-    x1 = schedule[:, :, :parameters.venue_types[0], course_list].sum(axis=3)
+    x1 = schedule[:, :, : parameters.venue_types[0], course_list].sum(axis=3)
     x1 = x1.sum(axis=2)
 
     my_model.addConstrs(
-        ((x1[i, j] >= x1[i, j + 1]) for i in range(parameters.number_of_working_days) 
-         for j in range(parameters.slots - 1)),
-        name="Experimental Constraint"
+        (
+            (x1[i, j] >= x1[i, j + 1])
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots - 1)
+        ),
+        name="Experimental Constraint",
     )
 
     # x2 = schedule[:, :parameters.slots-1, parameters.venue_types[0]:, :].sum(axis=3)
     # x2 = x2.sum(axis=2)
 
     # my_model.addConstrs(
-    #     ((x2[i, j] <= x2[i, j+1]) for i in range(parameters.number_of_working_days) 
+    #     ((x2[i, j] <= x2[i, j+1]) for i in range(parameters.number_of_working_days)
     #      for j in range(parameters.slots - 2)),
     #     name="Experimental Constraint"
     # )
@@ -818,79 +1266,92 @@ def experimental_constraint(my_model, schedule, parameters : classes.Params):
     return
 
 
-def constrs_nso(my_model, schedule, parameters : classes.Params):
+def constrs_nso(my_model, schedule, parameters: classes.Params):
     ground_index = parameters.venue_list.index("Ground")
     nso_index = parameters.course_list.index("NO 101/NO 103")
     # only in last slot
-    x1 = schedule[:, :parameters.slots - 1, ground_index, :].sum()
-    my_model.addConstr(
-        x1 == 0,
-        name="NSO_Constraint"
-    )
-
+    x1 = schedule[:, : parameters.slots - 1, ground_index, nso_index].sum()
+    my_model.addConstr(x1 == 0, name="NSO_Constraint")
 
     # no other course can use ground
     course_list = list(np.arange(parameters.number_of_courses))
     course_list.remove(nso_index)
     course_list = np.array(course_list)
-    x2 = schedule[:,:,ground_index,course_list].sum()
-    my_model.addConstr(
-        x2 == 0,
-        name="NSO_Constraint"
-    )
+    x2 = schedule[:, :, ground_index, course_list].sum()
+    my_model.addConstr(x2 == 0, name="NSO_Constraint")
 
     return
 
+
 # at most 1 slot with overlapping lab and theory
 
-def Constrs_Combined_Slots(my_model, schedule, parameters : classes.Params):
-    x1 = schedule[:,:,:parameters.venue_types[0],:].sum(axis=3)
+
+def Constrs_Combined_Slots(my_model, schedule, parameters: classes.Params):
+    x1 = schedule[:, :, : parameters.venue_types[0], :].sum(axis=3)
     x1 = x1.sum(axis=2)
-    x2 = schedule[:,:,parameters.venue_types[0]:,:].sum(axis=3)
+    x2 = schedule[:, :, parameters.venue_types[0] :, :].sum(axis=3)
     x2 = x2.sum(axis=2)
 
-    y1 = my_model.addMVar((parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY)
-    y2 = my_model.addMVar((parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY)
-
-
-    my_model.addConstrs(
-        (((y1[i,j].item() == 1) >> (x1[i,j] >= 1)) for i in range(parameters.number_of_working_days)
-         for j in range(parameters.slots)),
-         name="Conditional_Constraint"
+    y1 = my_model.addMVar(
+        (parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY
+    )
+    y2 = my_model.addMVar(
+        (parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY
     )
 
     my_model.addConstrs(
-        (((y1[i,j].item() == 0) >> (x1[i,j] == 0)) for i in range(parameters.number_of_working_days)
-         for j in range(parameters.slots)),
-         name="Conditional_Constraint"
+        (
+            ((y1[i, j].item() == 1) >> (x1[i, j] >= 1))
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+        ),
+        name="Conditional_Constraint",
     )
 
     my_model.addConstrs(
-        (((y2[i,j].item() == 1) >> (x2[i,j] >= 1)) for i in range(parameters.number_of_working_days)
-         for j in range(parameters.slots)),
-         name="Conditional_Constraint"
+        (
+            ((y1[i, j].item() == 0) >> (x1[i, j] == 0))
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+        ),
+        name="Conditional_Constraint",
     )
 
     my_model.addConstrs(
-        (((y2[i,j].item() == 0) >> (x2[i,j] == 0)) for i in range(parameters.number_of_working_days)
-         for j in range(parameters.slots)),
-         name="Conditional_Constraint"
+        (
+            ((y2[i, j].item() == 1) >> (x2[i, j] >= 1))
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+        ),
+        name="Conditional_Constraint",
+    )
+
+    my_model.addConstrs(
+        (
+            ((y2[i, j].item() == 0) >> (x2[i, j] == 0))
+            for i in range(parameters.number_of_working_days)
+            for j in range(parameters.slots)
+        ),
+        name="Conditional_Constraint",
     )
 
     constraint = my_model.addConstrs(
-        ( ((y1[i]*y2[i]).sum() <= 1) for i in range(parameters.number_of_working_days) ),
-        name="Combined_Slots_Constraint"
+        (
+            ((y1[i] * y2[i]).sum() <= 1)
+            for i in range(parameters.number_of_working_days)
+        ),
+        name="Combined_Slots_Constraint",
     )
 
     return constraint
 
 
 def add_constrs(my_model, schedule, parameters):
-
     constr_One_Venue_One_Course(my_model, schedule, parameters)
     print(f"\n1")
 
-    constrs = constr_No_course_Overlap_Student(my_model, schedule, parameters)
+    # constrs = constr_No_course_Overlap_Student(my_model, schedule, parameters)
+    constr_No_course_Overlap_Student(my_model, schedule, parameters)
     print("2")
 
     constr_No_course_Overlap_Professor(my_model, schedule, parameters)
@@ -933,10 +1394,11 @@ def add_constrs(my_model, schedule, parameters):
     print("15")
 
     print("Primary Constraints done !!!")
-    sec_constrs = []
+    # sec_constrs = []
     # sec_constrs.append(sec_constrs_non_overlapping_periods(my_model, schedule, parameters))
 
-    sec_constrs.append(sec_constrs_course_having_same_venue(my_model, schedule, parameters))
+    # sec_constrs.append(sec_constrs_course_having_same_venue(my_model, schedule, parameters))
+    sec_constrs_course_having_same_venue(my_model, schedule, parameters)
     print("16")
 
     # sec_constrs.append(Constrs_Combined_Slots(my_model, schedule, parameters))
@@ -950,73 +1412,159 @@ def add_constrs(my_model, schedule, parameters):
     # my_model.tune()
     # return constrs, sec_constrs
     # constrs = []
-    return constrs
-    # return
+    # return constrs
+    return
 
 
-def print_time_table(my_model, schedule, parameters : classes.Params, file, extra=""):
-    
-    my_model.write(f"Solutions/{parameters.number_of_working_days}"+extra+".sol")
+def print_each_group(my_model, schedule, parameters: classes.Params):
+    days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    with pd.ExcelWriter(
+        f"Results/Output_{parameters.number_of_working_days}.xlsx", engine="openpyxl"
+    ) as writer:
+        for group_i, group in enumerate(parameters.groups):
+            df = pd.DataFrame(
+                columns=["Day"] + [f"Slot {i}" for i in range(1, parameters.slots + 1)]
+            )
+            courses = list(np.where(parameters.groups_courses[group_i] == 1)[0])
+            if len(courses) > 0:
+                for i in range(parameters.number_of_working_days):
+                    temp = {}
+                    for j in range(parameters.slots):
+                        temp[j] = []
+                        for k in range(parameters.number_of_venues):
+                            for l in courses:
+                                if schedule[i, j, k, l].X == 1:
+                                    temp[j].append(
+                                        f"{parameters.course_list[l]} : {parameters.venue_list[k]}"
+                                    )
+                    dict_1 = {"Day": [f"{days[i]}"]}
+                    for slot in range(parameters.slots):
+                        dict_1[f"Slot {slot+1}"] = ["\n".join(temp[slot])]
+                    temp_df = pd.DataFrame(dict_1)
+                    df = pd.concat([df, temp_df], ignore_index=True)
+            df.to_excel(writer, sheet_name=f"{group}", index=False)
+        writer.save()
+    return
+
+
+# css_alt_rows = 'background-color: powderblue; color: black;'
+# css_indexes = 'background-color: steelblue; color: white;'
+#
+# (df.style.apply(lambda col: np.where(col.index % 2, css_alt_rows, None)) # alternating rows
+#          .applymap_index(lambda _: css_indexes, axis=0) # row indexes (pandas 1.4.0+)
+#          .applymap_index(lambda _: css_indexes, axis=1) # col indexes (pandas 1.4.0+)
+# ).to_excel('styled.xlsx', engine='openpyxl')
+
+def round_off(parameters: classes.Params):
+    my_list = []
+    with open(f"Solutions/{parameters.number_of_working_days}.sol", "r") as f:
+        my_list.extend(f.readlines())
+    for index,l in enumerate(my_list):
+        temp = l.split()
+        if temp[0] != '#':
+            temp[-1] = float(temp[-1])
+            if random.random() > temp[-1]:
+                temp[-1] = f"1\n"
+            else:
+                temp[-1] = f"0\n"
+            my_list[index] = " ".join(temp)
+
+    with open(f"Solutions/{parameters.number_of_working_days}.sol", "w") as f:
+        f.writelines(my_list)    
+
+    return
+
+def print_time_table(my_model, schedule, parameters: classes.Params, file, extra=""):
     # my_model.write(f"Models/{parameters.number_of_working_days}"+extra+".mps")
     print("\nYesssssss!")
     print(f"number_of_working_days : {parameters.number_of_working_days}\n")
     days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     printing_format = {}
     slots_utilized = 0
-    unique_venues = {campus:set() for campus in parameters.campus_list}
+    unique_venues = {campus: set() for campus in parameters.campus_list}
     try:
-        for i in range(parameters.number_of_working_days):
-            for j in range(parameters.slots):
-                # number_of_venues-number_of_labs, 
-                slot_not_empty = False
-                for k in range(parameters.number_of_venues):
-                    for l in range(parameters.number_of_courses):
-                        if my_model.getVarByName('time[%d,%d,%d,%d]' % (i, j, k, l)).X == 1:
-                            slot_not_empty = True
-                            unique_venues[parameters.campus_list[parameters.venue_campus[k]]].add(k)
-                            if parameters.course_list[l] in printing_format:
-                                printing_format[parameters.course_list[l]].append(str(days[i]) + str(j+1) + " [" + parameters.venue_dict[parameters.venue_list[k]].name + "]")
-                            else:
-                                printing_format[parameters.course_list[l]] = [str(days[i]) + str(j+1) + " [" + parameters.venue_dict[parameters.venue_list[k]].name + "]"]
-                if slot_not_empty:
-                    slots_utilized += 1
-        # print(f"number of working days utilized : {parameters.number_of_working_days}")
-        for campus,venue_set in unique_venues.items():
-            print(f"Campus {campus} : Venues {[parameters.venue_list[i] for i in venue_set]}\n  number of venues used : {len(venue_set)}\n")
-        print(f"number of slots utilized : {slots_utilized}\n")
-
+        schedule[0,0,0,0].X
     except:
-        try: 
+        try:
             my_model.Params.SolutionNumber = 1
-            slots_utilized = 0
-            unique_venues = {campus:set() for campus in parameters.campus_list}
-            for i in range(parameters.number_of_working_days):
-                for j in range(parameters.slots):
-                    # number_of_venues-number_of_labs, 
-                    slot_not_empty = False
-                    for k in range(parameters.number_of_venues):
-                        for l in range(parameters.number_of_courses):
-                            if my_model.getVarByName('time[%d,%d,%d,%d]' % (i, j, k, l)).X == 1:
-                                slot_not_empty = True
-                                unique_venues[parameters.campus_list[parameters.venue_campus[k]]].add(k)
-                                if parameters.course_list[l] in printing_format:
-                                    printing_format[parameters.course_list[l]].append(str(days[i]) + str(j+1) + " [" + parameters.venue_dict[parameters.venue_list[k]].name + "]")
-                                else:
-                                    printing_format[parameters.course_list[l]] = [str(days[i]) + str(j+1) + " [" + parameters.venue_dict[parameters.venue_list[k]].name + "]"]
-                    if slot_not_empty:
-                        slots_utilized += 1
-            # print(f"number of working days utilized : {parameters.number_of_working_days}")
-            for campus,venue_set in unique_venues.items():
-                print(f"Campus {campus} : Venues {[parameters.venue_list[i] for i in venue_set]}\n  number of venues used : {len(venue_set)}\n")
-            print(f"number of slots utilized : {slots_utilized}\n")
         except:
             print("No optimized solution found!")
             return
         
-    with  open(file, "w")  as f:
+    my_model.write(
+        f"Solutions/{parameters.number_of_working_days}" + extra + ".sol"
+    )
+
+    df = pd.DataFrame(
+        columns=["Day"] + [f"Slot {i}" for i in range(1, parameters.slots + 1)]
+    )
+    with pd.ExcelWriter(f"Results/Output_{parameters.number_of_working_days}.xlsx", engine="openpyxl") as writer:
+        for i in range(parameters.number_of_working_days):
+            temp = {}
+            for j in range(parameters.slots):
+                # number_of_venues-number_of_labs,
+                temp[j] = []
+                slot_not_empty = False
+                for k in range(parameters.number_of_venues):
+                    for l in range(parameters.number_of_courses):
+                        # if my_model.getVarByName('time[%d,%d,%d,%d]' % (i, j, k, l)).X == 1:
+                        if schedule[i, j, k, l].X == 1:
+                            slot_not_empty = True
+
+                            temp[j].append(
+                                f"{parameters.course_list[l]} : {parameters.venue_list[k]}"
+                            )
+                            unique_venues[
+                                parameters.campus_list[parameters.venue_campus[k]]
+                            ].add(k)
+                            if l in printing_format:
+                                printing_format[l].append(
+                                    str(days[i])
+                                    + str(j + 1)
+                                    + " ["
+                                    + parameters.venue_list[k]
+                                    + "]"
+                                )
+                            else:
+                                printing_format[l] = [
+                                    str(days[i])
+                                    + str(j + 1)
+                                    + " ["
+                                    + parameters.venue_list[k]
+                                    + "]"
+                                ]
+                if slot_not_empty:
+                    slots_utilized += 1
+
+            dict_1 = {"Day": [f"{days[i]}"]}
+            for slot in range(parameters.slots):
+                dict_1[f"Slot {slot+1}"] = ["\n".join(temp[slot])]
+            temp_df = pd.DataFrame(dict_1)
+            df = pd.concat([df, temp_df], ignore_index=True)
+        df.to_excel(writer, sheet_name=f"University Timetable", index=False)
+        writer.save()
+
+    # print(f"number of working days utilized : {parameters.number_of_working_days}")
+    for campus, venue_set in unique_venues.items():
+        print(
+            f"Campus {campus} : Venues {[parameters.venue_list[i] for i in venue_set]}\n  number of venues used : {len(venue_set)}\n"
+        )
+    print(f"number of slots utilized : {slots_utilized}\n")
+
+    with open(file, "w") as f:
         for course, time in printing_format.items():
-            f.write(f"{course} : {', '.join(time)}\n")
+            f.write(f"{parameters.course_list[course]} : {', '.join(time)}\n")
+
+    # print_each_group(my_model, schedule, parameters)
 
     # check.test(schedule, parameters)
-                
+
     return

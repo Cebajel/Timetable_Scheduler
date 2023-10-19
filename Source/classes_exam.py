@@ -59,6 +59,10 @@ class Course:
             self.division_p = 1
         # print(len(value[columns[9]].split("\n")), end=" ")
 
+        self.L = 1
+        self.T = 0
+        self.P = 0
+
 
     def add_student(self, student, priority):
         self.students[student] = priority
@@ -110,12 +114,15 @@ class Course:
     
 
 class Venue:
-    def __init__(self, name, number_of_setups, type, campus_type):
+    def __init__(self, value, columns):
         """venue type: 0 for classroom and 1 for lab"""
-        self.name = name.strip()
-        self.number_of_setups = int(number_of_setups) if not math.isnan(number_of_setups) else float('inf')
-        self.type = int(type)
-        self.campus_type = campus_type
+        self.name = str(value[columns[0]]).strip()
+        self.seater_1 = int(value[columns[1]]) if not math.isnan(value[columns[1]]) else 0
+        self.seater_2 = int(value[columns[2]]) if not math.isnan(value[columns[2]]) else 0
+        self.seater_3 = int(value[columns[3]]) if not math.isnan(value[columns[3]]) else 0
+        self.number_of_setups = int(value[columns[4]]) if not math.isnan(value[columns[4]]) else float('inf')
+        self.type = int(value[columns[5]])
+        self.campus_type = str(value[columns[6]]).strip()
 
 
 class Params:
@@ -156,8 +163,10 @@ class Params:
     baskets_elective = None
     basket_number_of_students = None
     basket_number_of_students_core = None
-    basket_students_core = None
-    basket_students_elective = None
+    splitted_courses = None
+
+    allowed_students = None
+    # 
     groups = None
     groups_courses = None
     # baskets_core = None
