@@ -21,44 +21,80 @@ class Instructor:
 
 
 class Course:
-    def __init__(self, value, columns, campus_type):
+    def __init__(self, value=None, columns=None, lecture=True, orig=None):
+        if orig:
+            self.copy_constructor(orig)
+        else:
+            self.non_copy_constructor(value, lecture, columns)
+
+    def non_copy_constructor(self, value, lecture, columns):
         self.code = value[columns[0]].strip()
         self.name = value[columns[1]].strip()
         self.instructors = []
         self.students = {}
         self.TAs = []
         self.groups = []
-        self.L = int(value[columns[3]]) if not math.isnan(value[columns[3]]) else 0
-        self.T = int(value[columns[4]]) if not math.isnan(value[columns[4]]) else 0
-        self.P = int(value[columns[5]]) if not math.isnan(value[columns[5]]) else 0
-        # print(type(self.L), type(self.T), type(self.P))
-        # print(self.L, self.T, self.P)
+        self.theory = lecture
+        L = int(value[columns[3]]) if not math.isnan(value[columns[3]]) else 0
+        T = int(value[columns[4]]) if not math.isnan(value[columns[4]]) else 0
+        # P = int(value[columns[5]]) if not math.isnan(value[columns[5]]) else 0
+        if lecture:
+            self.C = L + T
+        else:
+            self.C = 1
         self.duration = value[columns[6]].strip() if isinstance(value[columns[6]], str) else 'F'
-        # self.minor = True if isinstance(value[columns[7]], str) else False
         self.minor = True if value[columns[7]].strip() == 'Yes' else False
         self.mode = value[columns[8]].strip() if isinstance(value[columns[8]], str) else 'Offline'
-        # temp_campus = value[columns[9]].split("\n")
-        self.campus_type = campus_type
-        # self.campus_type = int(value[columns[9]]) if not math.isnan(value[columns[9]]) else 0 
+        temp_campus = value[columns[9]].split("\n")
+        if len(temp_campus) == 1:
+            self.campus_type = temp_campus[0]
+        else:
+            temp_campus = {
+                i.split(":")[0].strip(): i.split(":")[1].strip() for i in temp_campus
+            }
+            if lecture:
+                self.campus_type = temp_campus["L"]
+            else:
+                self.campus_type = temp_campus["P"]
 
         self.group_size = int(value[columns[10]]) if not math.isnan(value[columns[10]]) else 1
-        self.lab_type = int(value[columns[11]]) if not math.isnan(value[columns[11]]) else 1
+        if lecture:
+            self.venue_type = 0
+        else:
+            self.venue_type = int(value[columns[11]]) if not math.isnan(value[columns[11]]) else 1
 
         if isinstance(value[columns[13]], int):
-            self.division_l = int(value[columns[13]])
-            self.division_p = int(value[columns[13]])
+            self.divisions = int(value[columns[13]])
         elif isinstance(value[columns[13]], str):
             temp = value[columns[13]].strip()
             temp = temp.split("\n")
             temp = {i.split(":")[0].strip() : int(i.split(":")[1]) for i in temp}
-            self.division_l = temp["L"]
-            self.division_p = temp["P"]
-            # print(self.division_l, self.division_p)
+            if lecture:
+                self.divisions = temp["L"]
+            else:
+                self.divisions = temp["P"]
         else:
-            self.division_l = 1
-            self.division_p = 1
-        # print(len(value[columns[9]].split("\n")), end=" ")
-
+            self.divisions = 1
+        return
+    
+    def copy_constructor(self, orig):
+        self.code = orig.code
+        self.name = orig.name
+        self.instructors = [i for i in orig.instructors]
+        self.students = {student : priority for student, priority in orig.students.items()}
+        self.TAs = [i for i in orig.TAs]
+        self.groups = [i for i in orig.groups]
+        self.C = orig.C
+        self.duration = orig.duration
+        self.minor =orig.minor
+        self.mode = orig.mode
+        self.campus_type = orig.campus_type
+        self.groups = orig.groups
+        self.group_size = orig.group_size
+        self.venue_type = orig.venue_type
+        self.divisions = orig.divisions
+        self.theory = orig.theory
+        return
 
     def add_student(self, student, priority):
         self.students[student] = priority
@@ -73,40 +109,43 @@ class Course:
         self.TAs.append(TA)
         return
 
-    def get_LTP(self):
-        return self.L, self.T, self.P
+    def get_credits(self):
+        return self.C
 
     def get_strength(self):
         return len(self.students)
     
-    def get_params(self) :
-        params = {}
-        params["code"] = self.code
-        params["name"] = self.name
-        params["instructors"] = None
-        params["L"] = self.L
-        params["T"] = self.T
-        params["P"] = self.P
-        params["duration"] = self.duration
-        params["minor"] = "Yes" if self.minor else "No"
-        params["mode"] = self.mode
-        params["campus_type"] = self.campus_type
-        params["group_size"] = self.group_size
-        params["lab_type"] = self.lab_type
-        params["TAs"] = None
-        params["Number of divisions"] = f"L : {self.division_l}\n P : {self.division_p}"
-        return params
+    def get_number_of_tas(self):
+        return len(self.TAs)
+    
+    # def get_params(self) :
+    #     params = {}
+    #     params["code"] = self.code
+    #     params["name"] = self.name
+    #     params["instructors"] = None
+    #     params["L"] = self.L
+    #     params["T"] = self.T
+    #     params["P"] = self.P
+    #     params["duration"] = self.duration
+    #     params["minor"] = "Yes" if self.minor else "No"
+    #     params["mode"] = self.mode
+    #     params["campus_type"] = self.campus_type
+    #     params["group_size"] = self.group_size
+    #     params["lab_type"] = self.lab_type
+    #     params["TAs"] = None
+    #     params["Number of divisions"] = f"L : {self.division_l}\n P : {self.division_p}"
+    #     return params
     
 
-    def copy(self) :
-        value = self.get_params()
-        # print({key : type(ivalue) for key, ivalue in value.items()})
-        new_course = Course(value, list(value.keys()), self.campus_type)
-        new_course.groups = self.groups
-        new_course.instructors = [i for i in self.instructors]
-        new_course.students = {student : priority for student, priority in self.students.items()}
-        new_course.TAs = self.TAs
-        return new_course
+    # def copy(self) :
+    #     value = self.get_params()
+    #     # print({key : type(ivalue) for key, ivalue in value.items()})
+    #     new_course = Course(value, list(value.keys()), self.campus_type)
+    #     new_course.groups = self.groups
+    #     new_course.instructors = [i for i in self.instructors]
+    #     new_course.students = {student : priority for student, priority in self.students.items()}
+    #     new_course.TAs = self.TAs
+    #     return new_course
     
 
 class Venue:
@@ -119,52 +158,56 @@ class Venue:
 
 
 class Params:
-    number_of_working_days = None
-    slots = None
-    number_of_venues = None
-    number_of_courses = None
-    number_of_students = None
-    instructors_Courses = None
-    number_of_instructors = None
-    course_credits = None
-    courses_dict = None
-    venue_dict = None
-    venue_list = None
-    course_list = None
-    venue_setups = None
-    course_strength = None
-    full_sem_courses = None
-    pre_half_sem_courses = None
-    post_half_sem_courses = None
-    venue_types = None
-    venue_types_list = None
-    lab_types_list = None
-    course_lab = None
-    student_course_priority = None
-    non_minor_core_course = None
-    venue_type_campus = None
-    campus_list = None
-    number_of_campuses = None
-    course_campus = None
-    venue_campus = None
-    student_list = None
-    student_dict = None
-    instructor_dict = None
-    venue_dict = None
-    instructor_list = None
-    baskets_core = None
-    baskets_elective = None
-    basket_number_of_students = None
-    basket_number_of_students_core = None
-    basket_students_core = None
-    basket_students_elective = None
-    groups = None
-    groups_courses = None
-    # baskets_core = None
-    # baskets_elective = None
-
-    # def __init__(self) -> None:
-    #     pass
+    def __init__(self):
+        self.number_of_working_days = None
+        self.slots = None
+        self.number_of_venues = None
+        self.number_of_courses = None
+        self.number_of_students = None
+        self.instructors_Courses = None
+        self.number_of_instructors = None
+        self.course_credits = None
+        self.courses_dict = None
+        self.venue_dict = None
+        self.venue_list = None
+        self.course_list = None
+        self.venue_setups = None
+        self.course_strength = None
+        self.full_sem_courses = None
+        self.pre_half_sem_courses = None
+        self.post_half_sem_courses = None
+        self.venue_types = None
+        # self.course_lab = None
+        self.course_venue_type = None
+        self.course_group_size = None
+        self.student_course_priority = None
+        self.non_minor_core_course = None
+        self.campus_list = None
+        self.number_of_campuses = None
+        self.course_campus = None
+        self.venue_campus = None
+        self.student_list = None
+        self.student_dict = None
+        self.instructor_dict = None
+        self.venue_dict = None
+        self.instructor_list = None
+        self.baskets_core = None
+        self.baskets_elective = None
+        self.basket_number_of_students_core = None
+        self.basket_number_of_students_elective = None
+        self.basket_students_core = None
+        self.basket_students_elective = None
+        self.groups = None
+        self.groups_courses = None
+        self.splitted_courses = None
+        self.lab_courses = None
+        # self.baskets_core = None
+        # self.baskets_elective = None
+        self.course_venues = None
+        self.course_venues_number = None
+        self.course_theory = None
+        self.course_bifercations = None
+        self.lab_course_mapping = None
 
 #     def __repr__(self) -> str:
 #         return f"number_of_working_days = {self.number_of_working_days}\n\

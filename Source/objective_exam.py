@@ -24,8 +24,7 @@ def obj_minimize_unique_venues(my_model, schedule, parameters : classes_exam.Par
 
 
 def obj_one_day_one_exam(my_model, schedule, parameters : classes_exam.Params, index, priority):
-    x = schedule.sum(axis=2)
-    x = x.sum(axis=1)
+    x = schedule.sum(axis=1)
 
     # z = my_model.addMVar((parameters.number_of_students, parameters.number_of_working_days), vtype=GRB.BINARY)
 
@@ -47,21 +46,21 @@ def obj_one_day_one_exam(my_model, schedule, parameters : classes_exam.Params, i
     for b, basket in enumerate(parameters.baskets_core):
         for i in range(parameters.number_of_working_days):
             my_model.addConstr(
-                ((z[b, i].item() == 1) >> (x[i, np.array(basket)].sum() <= 1)),
+                ((z[b, i].item() == 0) >> (x[i, np.array(list(basket))].sum() <= 1)),
                 name = "One_Day_One_Exam_Constraint_1"
             )
 
             my_model.addConstr(
-                ((z[b, i].item() == 0) >> (x[i, np.array(basket)].sum() >= 2)),
+                ((z[b, i].item() == 1) >> (x[i, np.array(list(basket))].sum() >= 2)),
                 name = "One_Day_One_Exam_Constraint_2"
             )
 
-    my_model.setObjective((z.sum(axis=1)*parameters.basket_number_of_students_core).sum())
+    my_model.setObjective((z.sum(axis=1)*np.array(parameters.basket_number_of_students_core)).sum())
     return
 
 
 def add_objectives(my_model, schedule, parameters : classes_exam.Params):
-    my_model.ModelSense = GRB.MAXIMIZE
+    my_model.ModelSense = GRB.MINIMIZE
     
 
     # obj_minimize_unique_venues(my_model, schedule, parameters, 0, 1)

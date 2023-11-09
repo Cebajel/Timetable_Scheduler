@@ -2,15 +2,15 @@ from gurobipy import GRB
 import utils
 import objective
 
-parameters = utils.initialize_parameters("Data/Latest_Data.xlsx")
-# parameters = utils.initialize_parameters("Data/Test_data_2.xlsx")
+# parameters = utils.initialize_parameters("Data/Latest_Data.xlsx")
+parameters = utils.initialize_parameters("Data/Test_data_2.xlsx")
 # parameters = utils.initialize_parameters("Data/Test_data.xlsx")
 
 best_model, best_schedule = None, None
 least_working_days = None
 compromised_least_working_days = None
 best_compromised_model, best_compromised_schedule = None, None
-parameters.number_of_working_days = 7
+parameters.number_of_working_days = 5
 parameters.slots = 8
 # while parameters.number_of_working_days >= 1:
 # while True:
@@ -45,10 +45,10 @@ my_model.optimize()
 # print(my_model.status)
 
 # if (my_model.status == GRB.OPTIMAL) or (my_model.status == GRB.TIME_LIMIT):
-try:
-    utils.print_time_table(my_model, schedule, parameters, f"Results/test_time_table_{parameters.number_of_working_days}.txt")
-except:
-    pass
+# try:
+utils.print_time_table(my_model, schedule, parameters, f"Results/test_time_table_{parameters.number_of_working_days}.txt")
+# except:
+    # pass
     # least_working_days = parameters.number_of_working_days
     # best_model = my_model
     # best_schedule = schedule
