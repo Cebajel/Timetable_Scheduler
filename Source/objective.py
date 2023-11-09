@@ -4,7 +4,8 @@ import classes
 import numpy as np
 
 def feasibility_objective(my_model, schedule, parameters : classes.Params):
-    x1 = schedule.sum(axis=2)
+    # x1 = schedule.sum(axis=2)
+    x1 = schedule
     z1 = my_model.addMVar((len(parameters.baskets_elective), parameters.number_of_working_days, parameters.slots), vtype=GRB.BINARY)
 
     my_model.addConstrs(
@@ -45,7 +46,7 @@ def feasibility_objective(my_model, schedule, parameters : classes.Params):
 
     # my_model.setObjective((z1*np.array(parameters.basket_number_of_students)).sum() + (z2*1000).sum(), GRB.MINIMIZE)
     # my_model.setObjective((z2*1000).sum(), GRB.MINIMIZE)
-    my_model.setObjective((z1*np.array(parameters.basket_number_of_students)).sum(), GRB.MINIMIZE)
+    my_model.setObjective((z1*np.array(parameters.basket_number_of_students_elective)).sum(), GRB.MINIMIZE)
     my_model.update()
     return
 
