@@ -4,6 +4,8 @@
 
 The "Automated Timetable Scheduler" research project addresses the critical challenge of optimizing timetable scheduling within educational institutions and organizations. Timetable scheduling involves intricate resource allocation, constraint satisfaction, and the pursuit of optimal solutions. This research project leverages advanced optimization techniques, solvers, and modeling to develop a novel automated timetable scheduler. By optimizing resource allocation, minimizing conflicts, and enhancing resource utilization, the project aims to revolutionize scheduling processes, resulting in conflict-free, balanced, and user-friendly schedules. This proposal outlines the research objectives, methodology, expected outcomes, and budget for the project.
 
+Note: We can't provide data as we don't have permission from IIT Dharwad to share institute data.
+
 ## 1. Introduction
 
 ### 1.1 Background
