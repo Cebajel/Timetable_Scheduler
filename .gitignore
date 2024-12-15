@@ -1,0 +1,16 @@
+Testing data/
+Data/
+Temp/
+Solutions/
+Previous results/
+Preprocessing/
+Midsem/
+Endsem/
+great/
+Best/
+__pycache__/
+m.log
+model.ilp
+midsem.log
+Archive.zip
+gurobi.log
